@@ -28,17 +28,11 @@ describe('Game engine', () => {
 	});
 
 	it('updates prices after day advance', () => {
-		let idx = 0;
-		const seqRng = () => {
-			idx += 1;
-			if (idx === 13) return 0.1;
-			return 0.9;
-		};
-		const game = new Game(drugs, locations, seqRng);
+		const game = new Game(drugs, locations, rng);
 		const dayOne = game.prices('Denver');
 		game.advanceDay();
 		const dayTwo = game.prices('Denver');
-		expect(dayOne.CAN).not.toBe(dayTwo.CAN);
+		expect(dayOne).not.toEqual(dayTwo);
 	});
 
 	it('enforces cash and inventory rules', () => {

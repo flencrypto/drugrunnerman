@@ -10,6 +10,8 @@ const querySchema = z.object({
 	loc: z.string().trim().min(1).optional(),
 });
 
+const bodySchema = z.object({ to: z.string().trim().min(1) });
+
 async function loadData() {
 	const dataDir = path.resolve(__dirname, '..', 'data');
 	const [drugsRaw, locationsRaw] = await Promise.all([
@@ -54,7 +56,6 @@ export async function startServer(port = 3000) {
 	});
 
 	app.post('/v1/travel', (req, res) => {
-		const bodySchema = z.object({ to: z.string().trim().min(1) });
 		const parsed = bodySchema.safeParse(req.body);
 		if (!parsed.success) {
 			res.status(400).json({ error: 'Invalid request body', details: parsed.error.flatten() });
