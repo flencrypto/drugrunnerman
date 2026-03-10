@@ -1,62 +1,66 @@
 <div align="center">
 
-<h1>Blogchain</h1>
+<h1>Drugrunnerman</h1>
 
-Front-End powering Capsule Social's Blogchain application.
-
-Production code for blogchain.app can be found on the [capsule-vue](https://github.com/capsulesocial/capsule-vue) repository.
+A text-based drug trading game engine with a CLI player and REST API server.
 
 </div>
 
 ## Requirements
 
 - NodeJS v14.5.0 or higher.
+- yarn or npm
 
 ## Getting started
 
-### .env Setup
+### Install dependencies
 
 ```bash
-# Create .env with the credentials below
-
-VUE_CAPSULE_SERVER=https://payments.capsule.social/server
-VUE_CONTRACT_NAME=dev-1657702549987-47675900699610
-VUE_NEAR_NETWORK=testnet
-
+yarn install
 ```
 
-### Deploy Web App
+### Play in the terminal (CLI)
 
 ```bash
-# install dependencies
-$ `yarn install`
-
-# Server with hot reload on http://localhost:3000
-$ `yarn dev`
-
-# Code Linting
-$ `yarn lint`
-
-# Code Formatting
-$ `yarn format`
-
-# Production build
-$ `yarn build`
-
-
+yarn play
 ```
 
-# Vue 3 + Typescript + Vue-CLI
+### Start the REST API server
 
-This template should help get you started developing with Vue 3 and Typescript with Vue CLI. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+```bash
+yarn api
+```
 
-## Recommended IDE Setup
+### Run tests
 
-- [VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=johnsoncodehk.volar)
+```bash
+yarn test
+```
 
-## Type Support For `.vue` Imports in TS
+### Format code
 
-Since TypeScript cannot handle type information for `.vue` imports, they are shimmed to be a generic Vue component type by default. In most cases this is fine if you don't really care about component prop types outside of templates. However, if you wish to get actual prop types in `.vue` imports (for example to get props validation when using manual `h(...)` calls), you can enable Volar's `.vue` type support plugin by running `Volar: Switch TS Plugin on/off` from VSCode command palette.
+```bash
+yarn format
+```
+
+## Game Overview
+
+Drugrunnerman is a turn-based trading simulation. Each day you can:
+
+- **Buy** drugs at the current location's market price
+- **Sell** drugs from your inventory
+- **Travel** to a new location (advances the day)
+- **Skip** a day
+
+The goal is to maximise your cash within the configured number of days.
+
+## REST API
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/healthz` | Health check |
+| `GET` | `/v1/prices?loc=<name>` | Get current drug prices for a location |
+| `POST` | `/v1/travel` | Travel to a new location `{ "to": "<name>" }` |
 
 ## License
 
