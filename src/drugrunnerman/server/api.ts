@@ -1,10 +1,10 @@
 import express from 'express';
-import fs from 'fs/promises';
-import path from 'path';
 import { z } from 'zod';
 import { Game, GameRuleError } from '../engine/game';
 import type { Drug } from '../models/drug';
 import type { Location } from '../models/location';
+import drugsData from '../data/drugs.json';
+import locationsData from '../data/locations.json';
 
 const querySchema = z.object({
 	loc: z.string().trim().min(1).optional(),
@@ -12,22 +12,8 @@ const querySchema = z.object({
 
 const bodySchema = z.object({ to: z.string().trim().min(1) });
 
-async function loadData() {
-	const dataDir = path.resolve(__dirname, '..', 'data');
-	const [drugsRaw, locationsRaw] = await Promise.all([
-		fs.readFile(path.join(dataDir, 'drugs.json'), 'utf-8'),
-		fs.readFile(path.join(dataDir, 'locations.json'), 'utf-8'),
-	]);
-
-	return {
-		drugs: JSON.parse(drugsRaw) as Record<string, Drug>,
-		locations: JSON.parse(locationsRaw) as Record<string, Location>,
-	};
-}
-
 export async function createApp() {
-	const { drugs, locations } = await loadData();
-	const game = new Game(drugs, locations);
+	const game = new Game(drugsData as unknown as Record<string, Drug>, locationsData as unknown as Record<string, Location>);
 
 	const app = express();
 	app.use(express.json());

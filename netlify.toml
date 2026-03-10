@@ -1,6 +1,6 @@
 [build]
   command = "npx tsc --outDir dist"
-  functions = "netlify/functions"
+  functions = "dist/netlify/functions"
 
 [[redirects]]
   from = "/healthz"
