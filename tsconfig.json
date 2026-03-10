@@ -5,6 +5,7 @@
     "strict": true,
     "moduleResolution": "node",
     "skipLibCheck": true,
+    "resolveJsonModule": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
@@ -25,7 +26,8 @@
     ]
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "netlify/**/*.ts"
   ],
   "exclude": [
     "node_modules"
