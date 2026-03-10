@@ -1,3 +1,4 @@
+import seedrandom from 'seedrandom';
 import { Game, GameRuleError } from './game';
 import type { Drug } from '../models/drug';
 import type { Location } from '../models/location';
@@ -28,17 +29,24 @@ describe('Game engine', () => {
 	});
 
 	it('updates prices after day advance', () => {
-		let idx = 0;
-		const seqRng = () => {
-			idx += 1;
-			if (idx === 13) return 0.1;
-			return 0.9;
-		};
-		const game = new Game(drugs, locations, seqRng);
+		const game = new Game(drugs, locations, rng);
 		const dayOne = game.prices('Denver');
 		game.advanceDay();
 		const dayTwo = game.prices('Denver');
-		expect(dayOne.CAN).not.toBe(dayTwo.CAN);
+		expect(dayOne).not.toEqual(dayTwo);
+	});
+
+	it('prices are independent of query order (RNG isolation)', () => {
+		const gameDenverFirst = new Game(drugs, locations, seedrandom('fixed'));
+		const denverFirst = gameDenverFirst.prices('Denver');
+		const seattleFirst = gameDenverFirst.prices('Seattle');
+
+		const gameSeattleFirst = new Game(drugs, locations, seedrandom('fixed'));
+		const seattleSecond = gameSeattleFirst.prices('Seattle');
+		const denverSecond = gameSeattleFirst.prices('Denver');
+
+		expect(denverFirst).toEqual(denverSecond);
+		expect(seattleFirst).toEqual(seattleSecond);
 	});
 
 	it('enforces cash and inventory rules', () => {
@@ -57,5 +65,43 @@ describe('Game engine', () => {
 		game.travel('Seattle');
 		expect(game.location).toBe('Seattle');
 		expect(game.day).toBe(2);
+	});
+
+	describe('GameConfig validation', () => {
+		it('throws for negative startingCash', () => {
+			expect(() => new Game(drugs, locations, rng, { startingCash: -1 })).toThrow(GameRuleError);
+		});
+
+		it('throws for NaN startingCash', () => {
+			expect(() => new Game(drugs, locations, rng, { startingCash: NaN })).toThrow(GameRuleError);
+		});
+
+		it('throws for Infinity startingCash', () => {
+			expect(() => new Game(drugs, locations, rng, { startingCash: Infinity })).toThrow(GameRuleError);
+		});
+
+		it('throws for zero maxDays', () => {
+			expect(() => new Game(drugs, locations, rng, { maxDays: 0 })).toThrow(GameRuleError);
+		});
+
+		it('throws for negative maxDays', () => {
+			expect(() => new Game(drugs, locations, rng, { maxDays: -5 })).toThrow(GameRuleError);
+		});
+
+		it('throws for non-integer maxDays', () => {
+			expect(() => new Game(drugs, locations, rng, { maxDays: 1.5 })).toThrow(GameRuleError);
+		});
+
+		it('throws for zero capacity', () => {
+			expect(() => new Game(drugs, locations, rng, { capacity: 0 })).toThrow(GameRuleError);
+		});
+
+		it('throws for negative capacity', () => {
+			expect(() => new Game(drugs, locations, rng, { capacity: -10 })).toThrow(GameRuleError);
+		});
+
+		it('throws for non-integer capacity', () => {
+			expect(() => new Game(drugs, locations, rng, { capacity: 2.7 })).toThrow(GameRuleError);
+		});
 	});
 });

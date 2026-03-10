@@ -33,19 +33,35 @@ export class Game {
 	location: string;
 	readonly maxDays: number;
 	readonly capacity: number;
+	private readonly gameSeed: number;
 	private readonly priceBook = new Map<string, Record<Drug['code'], number>>();
 	private readonly inventoryState: Record<Drug['code'], number> = { CAN: 0, COC: 0, HER: 0, METH: 0, MDM: 0, FEN: 0 };
 
 	constructor(
 		private readonly drugs: Record<string, Drug>,
 		private readonly locations: Record<string, Location>,
-		private readonly rng: () => number = seedrandom(),
+		rng: () => number = seedrandom(),
 		config: GameConfig = {},
 	) {
-		this.cash = config.startingCash ?? 1000;
-		this.maxDays = config.maxDays ?? 30;
-		this.capacity = config.capacity ?? 100;
+		const startingCash = config.startingCash ?? 1000;
+		const maxDays = config.maxDays ?? 30;
+		const capacity = config.capacity ?? 100;
+
+		if (!Number.isFinite(startingCash) || startingCash < 0) {
+			throw new GameRuleError('startingCash must be a non-negative finite number');
+		}
+		if (!Number.isInteger(maxDays) || maxDays <= 0) {
+			throw new GameRuleError('maxDays must be a positive integer');
+		}
+		if (!Number.isInteger(capacity) || capacity <= 0) {
+			throw new GameRuleError('capacity must be a positive integer');
+		}
+
+		this.cash = startingCash;
+		this.maxDays = maxDays;
+		this.capacity = capacity;
 		this.location = config.startingLocation ?? 'Denver';
+		this.gameSeed = rng();
 
 		this.assertGameData();
 		if (!this.locations[this.location]) {
@@ -75,12 +91,13 @@ export class Game {
 			return { ...cached };
 		}
 
+		const subRng = seedrandom(`${this.gameSeed}:${this.day}:${loc}`);
 		const locAdjust = this.locations[loc].adjust;
 		const prices = Object.entries(this.drugs).reduce((acc, [code, drug]) => {
 			const typedCode = code as Drug['code'];
 			const locationMultiplier = locAdjust[typedCode] ?? 1;
 			const expectedPrice = drug.mu * locationMultiplier;
-			acc[typedCode] = nextPrice(expectedPrice, drug.sigma, this.rng);
+			acc[typedCode] = nextPrice(expectedPrice, drug.sigma, subRng);
 			return acc;
 		}, {} as Record<Drug['code'], number>);
 		this.priceBook.set(cacheKey, prices);

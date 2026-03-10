@@ -61,7 +61,7 @@
     "@babel/eslint-parser": "^7.19.1",
     "@playwright/test": "^1.25.2",
     "@types/dompurify": "^2.3.4",
-    "@types/inquirer": "^9.0.9",
+    "@types/inquirer": "^8.2.9",
     "@types/jest": "^29.5.5",
     "@types/json-stable-stringify": "^1.0.34",
     "@types/libsodium-wrappers": "^0.7.9",
