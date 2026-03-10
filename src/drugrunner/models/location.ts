@@ -1,6 +1,6 @@
 import type { Drug } from './drug';
 
 export interface Location {
-	name: string;
+	name?: string;
 	adjust: Partial<Record<Drug['code'], number>>;
 }
