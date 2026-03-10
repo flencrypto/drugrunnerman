@@ -1,0 +1,13 @@
+[build]
+  command = "npx tsc --outDir dist"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/healthz"
+  to = "/.netlify/functions/api/healthz"
+  status = 200
+
+[[redirects]]
+  from = "/v1/*"
+  to = "/.netlify/functions/api/v1/:splat"
+  status = 200

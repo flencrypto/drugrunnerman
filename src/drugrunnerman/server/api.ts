@@ -25,7 +25,7 @@ async function loadData() {
 	};
 }
 
-export async function startServer(port = 3000) {
+export async function createApp() {
 	const { drugs, locations } = await loadData();
 	const game = new Game(drugs, locations);
 
@@ -73,6 +73,11 @@ export async function startServer(port = 3000) {
 		}
 	});
 
+	return app;
+}
+
+export async function startServer(port = 3000) {
+	const app = await createApp();
 	app.listen(port, () => console.log(`API up on :${port}`));
 }
 
