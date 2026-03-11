@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.161",
+    "@types/express": "^5.0.6",
     "@types/inquirer": "^8.2.9",
     "@types/jest": "^29.5.5",
     "@types/seedrandom": "^3.0.8",

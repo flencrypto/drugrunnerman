@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { z } from 'zod';
 import { Game, GameRuleError } from '../engine/game';
 import type { Drug } from '../models/drug';
@@ -18,11 +18,11 @@ export async function createApp() {
 	const app = express();
 	app.use(express.json());
 
-	app.get('/healthz', (_req, res) => {
+	app.get('/healthz', (_req: Request, res: Response) => {
 		res.status(200).json({ status: 'ok' });
 	});
 
-	app.get('/v1/prices', (req, res) => {
+	app.get('/v1/prices', (req: Request, res: Response) => {
 		const parsed = querySchema.safeParse(req.query);
 		if (!parsed.success) {
 			res.status(400).json({ error: 'Invalid query params', details: parsed.error.flatten() });
@@ -41,7 +41,7 @@ export async function createApp() {
 		}
 	});
 
-	app.post('/v1/travel', (req, res) => {
+	app.post('/v1/travel', (req: Request, res: Response) => {
 		const parsed = bodySchema.safeParse(req.body);
 		if (!parsed.success) {
 			res.status(400).json({ error: 'Invalid request body', details: parsed.error.flatten() });
