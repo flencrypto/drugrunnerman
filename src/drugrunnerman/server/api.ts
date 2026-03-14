@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { type Request, type Response } from 'express';
 import { z } from 'zod';
 import { Game, GameRuleError } from '../engine/game';
 import type { Drug } from '../models/drug';
