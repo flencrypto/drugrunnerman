@@ -1,3 +1,4 @@
+import path from 'path';
 import express from 'express';
 import { z } from 'zod';
 import { Game, GameRuleError } from '../engine/game';
@@ -808,6 +809,8 @@ export async function createApp() {
 
 	const app = express();
 	app.use(express.json());
+	const publicDir = path.resolve(process.cwd(), 'public');
+	app.use(express.static(publicDir, { index: false }));
 
 	const apiIndex = {
 		name: 'drugrunnerman-api',
@@ -827,12 +830,16 @@ export async function createApp() {
 	app.get('/', (req, res) => {
 		res.format({
 			'text/html': () => {
+<<<<<<< copilot/add-api-endpoints-documentation
 				res.send(
 					buildGamePage(
 						drugsData as unknown as Record<string, Drug>,
 						locationsData as unknown as Record<string, Location>,
 					),
 				);
+=======
+				res.sendFile(path.join(publicDir, 'index.html'));
+>>>>>>> main
 			},
 			default: () => {
 				res.json(apiIndex);
