@@ -4,21 +4,24 @@ on:
     branches:
       - '**'
 
+permissions:
+  contents: read
+
 jobs:
 
   install-dependencies:
     runs-on: ubuntu-latest
     container:
-      image: node:16-alpine
+      image: node:18-alpine
     steps:
 
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
 
       - name: install tar (for actions/cache)
         run: apk add --no-cache tar
 
       # use the cached node_modules -- this is only used to speed up the install-dependencies job
-      - uses: actions/cache@v2
+      - uses: actions/cache@v4
         with:
           path: 'node_modules'
           key: ${{ runner.os }}-node-modules-${{ hashFiles('**/yarn.lock') }}
@@ -32,7 +35,7 @@ jobs:
       # this copy of node_modules will be used for the rest of the workflow
       - name: compress node_modules
         run: tar -czf node_modules.tar.gz node_modules
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: node_modules.tar.gz
           path: node_modules.tar.gz
@@ -41,12 +44,12 @@ jobs:
     needs: install-dependencies
     runs-on: ubuntu-latest
     container:
-      image: node:16-alpine
+      image: node:18-alpine
     steps:
 
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
         with:
           name: node_modules.tar.gz
       - name: extract node_modules
@@ -59,12 +62,12 @@ jobs:
     needs: install-dependencies
     runs-on: ubuntu-latest
     container:
-      image: node:16-alpine
+      image: node:18-alpine
     steps:
 
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
         with:
           name: node_modules.tar.gz
       - name: extract node_modules
@@ -72,3 +75,21 @@ jobs:
 
       - name: build
         run: yarn build
+
+  test:
+    needs: install-dependencies
+    runs-on: ubuntu-latest
+    container:
+      image: node:18-alpine
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: node_modules.tar.gz
+      - name: extract node_modules
+        run: tar -xzf node_modules.tar.gz
+
+      - name: test
+        run: yarn test

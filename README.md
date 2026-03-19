@@ -59,8 +59,12 @@ The goal is to maximise your cash within the configured number of days.
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/healthz` | Health check |
+| `GET` | `/v1/state` | Get current game state and prices |
 | `GET` | `/v1/prices?loc=<name>` | Get current drug prices for a location |
+| `POST` | `/v1/buy` | Buy drugs `{ "code": "<code>", "quantity": <n> }` |
+| `POST` | `/v1/sell` | Sell drugs `{ "code": "<code>", "quantity": <n> }` |
 | `POST` | `/v1/travel` | Travel to a new location `{ "to": "<name>" }` |
+| `POST` | `/v1/skip` | Skip a day without travelling |
 
 ## License
 

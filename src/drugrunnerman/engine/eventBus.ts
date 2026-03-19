@@ -7,6 +7,10 @@ export class EventBus {
 		this.listeners.push(fn);
 	}
 
+	off(fn: (e: GameEvent) => void) {
+		this.listeners = this.listeners.filter((l) => l !== fn);
+	}
+
 	emit(e: GameEvent) {
 		this.listeners.forEach((l) => l(e));
 	}

@@ -6,20 +6,96 @@ import type { Location } from '../models/location';
 import drugsData from '../data/drugs.json';
 import locationsData from '../data/locations.json';
 
+const drugCodes = Object.keys(drugsData) as [Drug['code'], ...Drug['code'][]];
+
 const querySchema = z.object({
 	loc: z.string().trim().min(1).optional(),
 });
 
-const bodySchema = z.object({ to: z.string().trim().min(1) });
+const travelBodySchema = z.object({ to: z.string().trim().min(1) });
+
+const tradeBodySchema = z.object({
+	code: z.enum(drugCodes),
+	quantity: z.number().int().positive(),
+});
 
 export async function createApp() {
-	const game = new Game(drugsData as unknown as Record<string, Drug>, locationsData as unknown as Record<string, Location>);
+	const gameSessions = new Map<string, Game>();
+
+	function getOrCreateGame(sid: string): Game {
+		let game = gameSessions.get(sid);
+		if (!game) {
+			game = new Game(
+				drugsData as unknown as Record<string, Drug>,
+				locationsData as unknown as Record<string, Location>,
+			);
+			gameSessions.set(sid, game);
+		}
+		return game;
+	}
+
+	function sessionId(req: express.Request): string {
+		return (req.headers['x-session-id'] as string | undefined) ?? 'default';
+	}
 
 	const app = express();
 	app.use(express.json());
 
+	const apiIndex = {
+		name: 'drugrunnerman-api',
+		version: 'v1',
+		note: 'Supply an X-Session-ID header to maintain per-user game state.',
+		endpoints: [
+			'GET  /healthz',
+			'GET  /v1/state',
+			'GET  /v1/prices[?loc=<location>]',
+			'POST /v1/buy    { code, quantity }',
+			'POST /v1/sell   { code, quantity }',
+			'POST /v1/travel { to }',
+			'POST /v1/skip',
+		],
+	};
+
+	app.get('/', (req, res) => {
+		res.format({
+			'text/html': () => {
+				res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DrugRunnerMan API</title>
+  <style>
+    body { font-family: monospace; max-width: 640px; margin: 2rem auto; padding: 0 1rem; background: #111; color: #cfc; }
+    h1 { color: #0f0; }
+    code { background: #222; padding: 2px 6px; border-radius: 3px; }
+    ul { line-height: 2; }
+    .note { color: #fa0; }
+  </style>
+</head>
+<body>
+  <h1>DrugRunnerMan API</h1>
+  <p class="note">Supply an <code>X-Session-ID</code> header to maintain per-user game state.</p>
+  <h2>Endpoints</h2>
+  <ul>
+    ${apiIndex.endpoints.map((e) => `<li><code>${e}</code></li>`).join('\n    ')}
+  </ul>
+</body>
+</html>`);
+			},
+			default: () => {
+				res.json(apiIndex);
+			},
+		});
+	});
+
 	app.get('/healthz', (_req, res) => {
 		res.status(200).json({ status: 'ok' });
+	});
+
+	app.get('/v1/state', (req, res) => {
+		const game = getOrCreateGame(sessionId(req));
+		res.json({ state: game.snapshot(), prices: game.prices(game.location) });
 	});
 
 	app.get('/v1/prices', (req, res) => {
@@ -29,6 +105,7 @@ export async function createApp() {
 			return;
 		}
 
+		const game = getOrCreateGame(sessionId(req));
 		const loc = parsed.data.loc ?? game.location;
 		try {
 			res.json({ day: game.day, location: loc, prices: game.prices(loc) });
@@ -41,14 +118,67 @@ export async function createApp() {
 		}
 	});
 
-	app.post('/v1/travel', (req, res) => {
-		const parsed = bodySchema.safeParse(req.body);
+	app.post('/v1/buy', (req, res) => {
+		const parsed = tradeBodySchema.safeParse(req.body);
 		if (!parsed.success) {
 			res.status(400).json({ error: 'Invalid request body', details: parsed.error.flatten() });
 			return;
 		}
+		const game = getOrCreateGame(sessionId(req));
 		try {
-			game.travel(parsed.data.to);
+			const totalCost = game.buy(parsed.data.code, parsed.data.quantity);
+			res.status(200).json({ state: game.snapshot(), totalCost });
+		} catch (error: unknown) {
+			if (error instanceof GameRuleError) {
+				res.status(422).json({ error: error.message });
+				return;
+			}
+			res.status(500).json({ error: 'Internal server error' });
+		}
+	});
+
+	app.post('/v1/sell', (req, res) => {
+		const parsed = tradeBodySchema.safeParse(req.body);
+		if (!parsed.success) {
+			res.status(400).json({ error: 'Invalid request body', details: parsed.error.flatten() });
+			return;
+		}
+		const game = getOrCreateGame(sessionId(req));
+		try {
+			const revenue = game.sell(parsed.data.code, parsed.data.quantity);
+			res.status(200).json({ state: game.snapshot(), revenue });
+		} catch (error: unknown) {
+			if (error instanceof GameRuleError) {
+				res.status(422).json({ error: error.message });
+				return;
+			}
+			res.status(500).json({ error: 'Internal server error' });
+		}
+	});
+
+	app.post('/v1/travel', (req, res) => {
+		const parsed = travelBodySchema.safeParse(req.body);
+		if (!parsed.success) {
+			res.status(400).json({ error: 'Invalid request body', details: parsed.error.flatten() });
+			return;
+		}
+		const game = getOrCreateGame(sessionId(req));
+		try {
+			const policeEncounter = game.travel(parsed.data.to);
+			res.status(200).json({ state: game.snapshot(), prices: game.prices(game.location), policeEncounter });
+		} catch (error: unknown) {
+			if (error instanceof GameRuleError) {
+				res.status(422).json({ error: error.message });
+				return;
+			}
+			res.status(500).json({ error: 'Internal server error' });
+		}
+	});
+
+	app.post('/v1/skip', (req, res) => {
+		const game = getOrCreateGame(sessionId(req));
+		try {
+			game.advanceDay();
 			res.status(200).json({ state: game.snapshot(), prices: game.prices(game.location) });
 		} catch (error: unknown) {
 			if (error instanceof GameRuleError) {
@@ -57,6 +187,10 @@ export async function createApp() {
 			}
 			res.status(500).json({ error: 'Internal server error' });
 		}
+	});
+
+	app.use((_req, res) => {
+		res.status(404).json({ error: 'Not found' });
 	});
 
 	return app;
