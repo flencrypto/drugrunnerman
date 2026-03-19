@@ -9,7 +9,7 @@ jobs:
   install-dependencies:
     runs-on: ubuntu-latest
     container:
-      image: node:16-alpine
+      image: node:18-alpine
     steps:
 
       - uses: actions/checkout@v1
@@ -41,7 +41,7 @@ jobs:
     needs: install-dependencies
     runs-on: ubuntu-latest
     container:
-      image: node:16-alpine
+      image: node:18-alpine
     steps:
 
       - uses: actions/checkout@v1
@@ -59,7 +59,7 @@ jobs:
     needs: install-dependencies
     runs-on: ubuntu-latest
     container:
-      image: node:16-alpine
+      image: node:18-alpine
     steps:
 
       - uses: actions/checkout@v1
@@ -72,3 +72,21 @@ jobs:
 
       - name: build
         run: yarn build
+
+  test:
+    needs: install-dependencies
+    runs-on: ubuntu-latest
+    container:
+      image: node:18-alpine
+    steps:
+
+      - uses: actions/checkout@v1
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: node_modules.tar.gz
+      - name: extract node_modules
+        run: tar -xzf node_modules.tar.gz
+
+      - name: test
+        run: yarn test

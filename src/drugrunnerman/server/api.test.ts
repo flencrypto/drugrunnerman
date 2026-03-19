@@ -1,0 +1,147 @@
+import request from 'supertest';
+import { createApp } from './api';
+import type { Express } from 'express';
+
+let app: Express;
+
+beforeAll(async () => {
+	app = await createApp();
+});
+
+describe('GET /healthz', () => {
+	it('returns status ok', async () => {
+		const res = await request(app).get('/healthz');
+		expect(res.status).toBe(200);
+		expect(res.body).toEqual({ status: 'ok' });
+	});
+});
+
+describe('GET /v1/state', () => {
+	it('returns current game state and prices', async () => {
+		const res = await request(app).get('/v1/state');
+		expect(res.status).toBe(200);
+		expect(res.body).toHaveProperty('state');
+		expect(res.body).toHaveProperty('prices');
+		expect(res.body.state).toHaveProperty('day');
+		expect(res.body.state).toHaveProperty('cash');
+		expect(res.body.state).toHaveProperty('location');
+	});
+});
+
+describe('GET /v1/prices', () => {
+	it('returns prices for current location when no loc param given', async () => {
+		const res = await request(app).get('/v1/prices');
+		expect(res.status).toBe(200);
+		expect(res.body).toHaveProperty('day');
+		expect(res.body).toHaveProperty('location');
+		expect(res.body).toHaveProperty('prices');
+	});
+
+	it('returns prices for a specific location', async () => {
+		const res = await request(app).get('/v1/prices?loc=Denver');
+		expect(res.status).toBe(200);
+		expect(res.body.location).toBe('Denver');
+		expect(res.body.prices).toHaveProperty('CAN');
+	});
+
+	it('returns 422 for an unknown location', async () => {
+		const res = await request(app).get('/v1/prices?loc=Narnia');
+		expect(res.status).toBe(422);
+		expect(res.body).toHaveProperty('error');
+	});
+});
+
+describe('POST /v1/buy', () => {
+	it('successfully buys a drug and returns updated state', async () => {
+		const stateBefore = await request(app).get('/v1/state');
+		const cashBefore: number = stateBefore.body.state.cash;
+
+		const res = await request(app).post('/v1/buy').send({ code: 'CAN', quantity: 1 });
+		expect(res.status).toBe(200);
+		expect(res.body).toHaveProperty('state');
+		expect(res.body).toHaveProperty('totalCost');
+		expect(res.body.totalCost).toBeGreaterThan(0);
+		expect(res.body.state.cash).toBeLessThan(cashBefore);
+		expect(res.body.state.inventory.CAN).toBeGreaterThanOrEqual(1);
+	});
+
+	it('returns 422 when buying with insufficient cash', async () => {
+		const res = await request(app).post('/v1/buy').send({ code: 'COC', quantity: 100000 });
+		expect(res.status).toBe(422);
+		expect(res.body).toHaveProperty('error');
+	});
+
+	it('returns 400 for invalid request body', async () => {
+		const res = await request(app).post('/v1/buy').send({ code: 'INVALID', quantity: 1 });
+		expect(res.status).toBe(400);
+		expect(res.body).toHaveProperty('error');
+	});
+
+	it('returns 400 for non-positive quantity', async () => {
+		const res = await request(app).post('/v1/buy').send({ code: 'CAN', quantity: 0 });
+		expect(res.status).toBe(400);
+	});
+});
+
+describe('POST /v1/sell', () => {
+	it('successfully sells a drug and returns updated state', async () => {
+		await request(app).post('/v1/buy').send({ code: 'CAN', quantity: 1 });
+
+		const stateBefore = await request(app).get('/v1/state');
+		const cashBefore: number = stateBefore.body.state.cash;
+
+		const res = await request(app).post('/v1/sell').send({ code: 'CAN', quantity: 1 });
+		expect(res.status).toBe(200);
+		expect(res.body).toHaveProperty('state');
+		expect(res.body).toHaveProperty('revenue');
+		expect(res.body.revenue).toBeGreaterThan(0);
+		expect(res.body.state.cash).toBeGreaterThan(cashBefore);
+	});
+
+	it('returns 422 when selling more than in inventory', async () => {
+		const res = await request(app).post('/v1/sell').send({ code: 'HER', quantity: 99999 });
+		expect(res.status).toBe(422);
+		expect(res.body).toHaveProperty('error');
+	});
+
+	it('returns 400 for invalid drug code', async () => {
+		const res = await request(app).post('/v1/sell').send({ code: 'FAKE', quantity: 1 });
+		expect(res.status).toBe(400);
+	});
+});
+
+describe('POST /v1/travel', () => {
+	it('travels to a location and returns updated state', async () => {
+		const res = await request(app).post('/v1/travel').send({ to: 'Medellin' });
+		expect(res.status).toBe(200);
+		expect(res.body).toHaveProperty('state');
+		expect(res.body).toHaveProperty('prices');
+		expect(res.body.state.location).toBe('Medellin');
+		expect(res.body.state.day).toBeGreaterThan(1);
+		expect(res.body).toHaveProperty('policeEncounter');
+	});
+
+	it('returns 422 for unknown destination', async () => {
+		const res = await request(app).post('/v1/travel').send({ to: 'Atlantis' });
+		expect(res.status).toBe(422);
+		expect(res.body).toHaveProperty('error');
+	});
+
+	it('returns 400 for missing destination', async () => {
+		const res = await request(app).post('/v1/travel').send({});
+		expect(res.status).toBe(400);
+	});
+});
+
+describe('POST /v1/skip', () => {
+	it('advances the day and returns updated state', async () => {
+		const stateBefore = await request(app).get('/v1/state');
+		const dayBefore: number = stateBefore.body.state.day;
+
+		const res = await request(app).post('/v1/skip');
+		expect(res.status).toBe(200);
+		expect(res.body).toHaveProperty('state');
+		expect(res.body).toHaveProperty('prices');
+		expect(res.body.state.day).toBe(dayBefore + 1);
+	});
+});

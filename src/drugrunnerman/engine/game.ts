@@ -2,6 +2,8 @@ import seedrandom from 'seedrandom';
 import type { Drug } from '../models/drug';
 import type { Location } from '../models/location';
 import { nextPrice } from './priceGenerator';
+import { EventBus } from './eventBus';
+import { PoliceAI, CopState } from './policeAI';
 
 export class GameRuleError extends Error {
 	constructor(message: string) {
@@ -27,15 +29,24 @@ export interface PortfolioSnapshot {
 	inventory: Record<Drug['code'], number>;
 }
 
+export interface PoliceEncounter {
+	outcome: 'arrest' | 'shootout';
+	fine?: number;
+	inventorySeized?: Partial<Record<Drug['code'], number>>;
+	inventoryLost?: Partial<Record<Drug['code'], number>>;
+}
+
 export class Game {
 	day = 1;
 	cash: number;
 	location: string;
 	readonly maxDays: number;
 	readonly capacity: number;
+	readonly bus = new EventBus();
 	private readonly gameSeed: number;
 	private readonly priceBook = new Map<string, Record<Drug['code'], number>>();
 	private readonly inventoryState: Record<Drug['code'], number> = { CAN: 0, COC: 0, HER: 0, METH: 0, MDM: 0, FEN: 0 };
+	private readonly police = new PoliceAI();
 
 	constructor(
 		private readonly drugs: Record<string, Drug>,
@@ -81,6 +92,10 @@ export class Game {
 		return this.day > this.maxDays;
 	}
 
+	get threat(): number {
+		return this.usedCapacity / this.capacity;
+	}
+
 	prices(loc: string): Record<Drug['code'], number> {
 		if (!this.locations[loc]) {
 			throw new GameRuleError(`Unknown location: ${loc}`);
@@ -91,7 +106,7 @@ export class Game {
 			return { ...cached };
 		}
 
-		const subRng = seedrandom(`${this.gameSeed}:${this.day}:${loc}`);
+		const subRng = this.makeSubRng(`${this.day}:${loc}`);
 		const locAdjust = this.locations[loc].adjust;
 		const prices = Object.entries(this.drugs).reduce((acc, [code, drug]) => {
 			const typedCode = code as Drug['code'];
@@ -118,6 +133,7 @@ export class Game {
 		}
 		this.cash -= totalCost;
 		this.inventoryState[code] += quantity;
+		this.bus.emit({ type: 'buy', code, quantity, totalCost });
 		return totalCost;
 	}
 
@@ -131,21 +147,59 @@ export class Game {
 		const revenue = this.prices(this.location)[code] * quantity;
 		this.inventoryState[code] -= quantity;
 		this.cash += revenue;
+		this.bus.emit({ type: 'sell', code, quantity, revenue });
 		return revenue;
 	}
 
-	travel(to: string) {
+	travel(to: string): PoliceEncounter | null {
 		this.ensureGameInProgress();
 		if (!this.locations[to]) {
 			throw new GameRuleError(`Unknown location: ${to}`);
 		}
+		const from = this.location;
 		this.location = to;
 		this.advanceDay();
+
+		const policeRng = this.makeSubRng(`police:${this.day}`);
+		const newState = this.police.step(this.threat, policeRng);
+
+		let encounter: PoliceEncounter | null = null;
+		if (newState === CopState.Arrest) {
+			const fine = Math.floor(this.cash * 0.2);
+			const inventorySeized: Partial<Record<Drug['code'], number>> = {};
+			for (const code of Object.keys(this.inventoryState) as Drug['code'][]) {
+				if (this.inventoryState[code] > 0) {
+					inventorySeized[code] = this.inventoryState[code];
+					this.inventoryState[code] = 0;
+				}
+			}
+			this.cash -= fine;
+			encounter = { outcome: 'arrest', fine, inventorySeized };
+			this.bus.emit({ type: 'police', ...encounter });
+		} else if (newState === CopState.Shootout) {
+			const inventoryLost: Partial<Record<Drug['code'], number>> = {};
+			for (const code of Object.keys(this.inventoryState) as Drug['code'][]) {
+				const lost = Math.floor(this.inventoryState[code] * 0.5);
+				if (lost > 0) {
+					this.inventoryState[code] -= lost;
+					inventoryLost[code] = lost;
+				}
+			}
+			encounter = { outcome: 'shootout', inventoryLost };
+			this.bus.emit({ type: 'police', ...encounter });
+		}
+
+		this.bus.emit({ type: 'travel', from, to, day: this.day });
+		return encounter;
 	}
 
 	advanceDay() {
 		this.ensureGameInProgress();
 		this.day += 1;
+		this.bus.emit({ type: 'advanceDay', day: this.day });
+		if (this.isGameOver) {
+			this.bus.emit({ type: 'gameOver', snapshot: this.snapshot() });
+		}
 	}
 
 	snapshot(): PortfolioSnapshot {
@@ -158,6 +212,10 @@ export class Game {
 			maxDays: this.maxDays,
 			inventory: this.inventory,
 		};
+	}
+
+	private makeSubRng(namespace: string): () => number {
+		return seedrandom(`${this.gameSeed}:${namespace}`);
 	}
 
 	private assertGameData() {
