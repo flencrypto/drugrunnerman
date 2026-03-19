@@ -1,9 +1,16 @@
 [build]
   command = "npx tsc --outDir dist"
+  publish = "public"
   functions = "dist/netlify/functions"
 
 [[redirects]]
-  from = "/*"
+  from = "/v1/*"
+  to = "/.netlify/functions/api"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/healthz"
   to = "/.netlify/functions/api"
   status = 200
   force = true

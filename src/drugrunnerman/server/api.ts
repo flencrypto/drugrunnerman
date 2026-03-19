@@ -1,3 +1,4 @@
+import path from 'path';
 import express from 'express';
 import { z } from 'zod';
 import { Game, GameRuleError } from '../engine/game';
@@ -40,6 +41,8 @@ export async function createApp() {
 
 	const app = express();
 	app.use(express.json());
+	const publicDir = path.resolve(process.cwd(), 'public');
+	app.use(express.static(publicDir, { index: false }));
 
 	const apiIndex = {
 		name: 'drugrunnerman-api',
@@ -59,29 +62,7 @@ export async function createApp() {
 	app.get('/', (req, res) => {
 		res.format({
 			'text/html': () => {
-				res.send(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DrugRunnerMan API</title>
-  <style>
-    body { font-family: monospace; max-width: 640px; margin: 2rem auto; padding: 0 1rem; background: #111; color: #cfc; }
-    h1 { color: #0f0; }
-    code { background: #222; padding: 2px 6px; border-radius: 3px; }
-    ul { line-height: 2; }
-    .note { color: #fa0; }
-  </style>
-</head>
-<body>
-  <h1>DrugRunnerMan API</h1>
-  <p class="note">Supply an <code>X-Session-ID</code> header to maintain per-user game state.</p>
-  <h2>Endpoints</h2>
-  <ul>
-    ${apiIndex.endpoints.map((e) => `<li><code>${e}</code></li>`).join('\n    ')}
-  </ul>
-</body>
-</html>`);
+				res.sendFile(path.join(publicDir, 'index.html'));
 			},
 			default: () => {
 				res.json(apiIndex);

@@ -13,8 +13,10 @@ describe('GET /', () => {
 		const res = await request(app).get('/').set('Accept', 'text/html,application/xhtml+xml,*/*');
 		expect(res.status).toBe(200);
 		expect(res.headers['content-type']).toMatch(/text\/html/);
-		expect(res.text).toContain('DrugRunnerMan API');
+		expect(res.text).toContain('DrugRunnerMan');
 		expect(res.text).toContain('/v1/state');
+		expect(res.text).toContain('Market');
+		expect(res.text).toContain('Travel');
 	});
 
 	it('returns JSON index for API clients', async () => {
