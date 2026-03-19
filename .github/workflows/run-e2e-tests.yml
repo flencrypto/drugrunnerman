@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - '**'
+
+permissions:
+  contents: read
+
 jobs:
   test:
     timeout-minutes: 20
