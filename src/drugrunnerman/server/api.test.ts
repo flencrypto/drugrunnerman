@@ -4,7 +4,7 @@ import type { Express } from 'express';
 
 let app: Express;
 
-beforeAll(async () => {
+beforeEach(async () => {
 	app = await createApp();
 });
 

@@ -20,10 +20,23 @@ const tradeBodySchema = z.object({
 });
 
 export async function createApp() {
-	const game = new Game(
-		drugsData as unknown as Record<string, Drug>,
-		locationsData as unknown as Record<string, Location>,
-	);
+	const gameSessions = new Map<string, Game>();
+
+	function getOrCreateGame(sid: string): Game {
+		let game = gameSessions.get(sid);
+		if (!game) {
+			game = new Game(
+				drugsData as unknown as Record<string, Drug>,
+				locationsData as unknown as Record<string, Location>,
+			);
+			gameSessions.set(sid, game);
+		}
+		return game;
+	}
+
+	function sessionId(req: express.Request): string {
+		return (req.headers['x-session-id'] as string | undefined) ?? 'default';
+	}
 
 	const app = express();
 	app.use(express.json());
@@ -32,7 +45,8 @@ export async function createApp() {
 		res.status(200).json({ status: 'ok' });
 	});
 
-	app.get('/v1/state', (_req, res) => {
+	app.get('/v1/state', (req, res) => {
+		const game = getOrCreateGame(sessionId(req));
 		res.json({ state: game.snapshot(), prices: game.prices(game.location) });
 	});
 
@@ -43,6 +57,7 @@ export async function createApp() {
 			return;
 		}
 
+		const game = getOrCreateGame(sessionId(req));
 		const loc = parsed.data.loc ?? game.location;
 		try {
 			res.json({ day: game.day, location: loc, prices: game.prices(loc) });
@@ -61,6 +76,7 @@ export async function createApp() {
 			res.status(400).json({ error: 'Invalid request body', details: parsed.error.flatten() });
 			return;
 		}
+		const game = getOrCreateGame(sessionId(req));
 		try {
 			const totalCost = game.buy(parsed.data.code, parsed.data.quantity);
 			res.status(200).json({ state: game.snapshot(), totalCost });
@@ -79,6 +95,7 @@ export async function createApp() {
 			res.status(400).json({ error: 'Invalid request body', details: parsed.error.flatten() });
 			return;
 		}
+		const game = getOrCreateGame(sessionId(req));
 		try {
 			const revenue = game.sell(parsed.data.code, parsed.data.quantity);
 			res.status(200).json({ state: game.snapshot(), revenue });
@@ -97,6 +114,7 @@ export async function createApp() {
 			res.status(400).json({ error: 'Invalid request body', details: parsed.error.flatten() });
 			return;
 		}
+		const game = getOrCreateGame(sessionId(req));
 		try {
 			const policeEncounter = game.travel(parsed.data.to);
 			res.status(200).json({ state: game.snapshot(), prices: game.prices(game.location), policeEncounter });
@@ -109,7 +127,8 @@ export async function createApp() {
 		}
 	});
 
-	app.post('/v1/skip', (_req, res) => {
+	app.post('/v1/skip', (req, res) => {
+		const game = getOrCreateGame(sessionId(req));
 		try {
 			game.advanceDay();
 			res.status(200).json({ state: game.snapshot(), prices: game.prices(game.location) });
