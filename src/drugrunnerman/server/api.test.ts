@@ -8,6 +8,16 @@ beforeEach(async () => {
 	app = await createApp();
 });
 
+describe('GET /', () => {
+	it('returns API index with endpoint list', async () => {
+		const res = await request(app).get('/');
+		expect(res.status).toBe(200);
+		expect(res.body).toHaveProperty('name', 'drugrunnerman-api');
+		expect(res.body).toHaveProperty('endpoints');
+		expect(Array.isArray(res.body.endpoints)).toBe(true);
+	});
+});
+
 describe('GET /healthz', () => {
 	it('returns status ok', async () => {
 		const res = await request(app).get('/healthz');

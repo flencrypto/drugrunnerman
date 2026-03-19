@@ -41,6 +41,23 @@ export async function createApp() {
 	const app = express();
 	app.use(express.json());
 
+	app.get('/', (_req, res) => {
+		res.json({
+			name: 'drugrunnerman-api',
+			version: 'v1',
+			note: 'Supply an X-Session-ID header to maintain per-user game state.',
+			endpoints: [
+				'GET  /healthz',
+				'GET  /v1/state',
+				'GET  /v1/prices[?loc=<location>]',
+				'POST /v1/buy    { code, quantity }',
+				'POST /v1/sell   { code, quantity }',
+				'POST /v1/travel { to }',
+				'POST /v1/skip',
+			],
+		});
+	});
+
 	app.get('/healthz', (_req, res) => {
 		res.status(200).json({ status: 'ok' });
 	});
