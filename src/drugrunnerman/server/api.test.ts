@@ -145,3 +145,17 @@ describe('POST /v1/skip', () => {
 		expect(res.body.state.day).toBe(dayBefore + 1);
 	});
 });
+
+describe('404 handler', () => {
+	it('returns JSON 404 for unknown routes', async () => {
+		const res = await request(app).get('/nonexistent');
+		expect(res.status).toBe(404);
+		expect(res.body).toEqual({ error: 'Not found' });
+	});
+
+	it('returns JSON 404 for unknown POST routes', async () => {
+		const res = await request(app).post('/v1/unknown');
+		expect(res.status).toBe(404);
+		expect(res.body).toEqual({ error: 'Not found' });
+	});
+});
