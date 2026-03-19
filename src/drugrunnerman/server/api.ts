@@ -41,20 +41,51 @@ export async function createApp() {
 	const app = express();
 	app.use(express.json());
 
-	app.get('/', (_req, res) => {
-		res.json({
-			name: 'drugrunnerman-api',
-			version: 'v1',
-			note: 'Supply an X-Session-ID header to maintain per-user game state.',
-			endpoints: [
-				'GET  /healthz',
-				'GET  /v1/state',
-				'GET  /v1/prices[?loc=<location>]',
-				'POST /v1/buy    { code, quantity }',
-				'POST /v1/sell   { code, quantity }',
-				'POST /v1/travel { to }',
-				'POST /v1/skip',
-			],
+	const apiIndex = {
+		name: 'drugrunnerman-api',
+		version: 'v1',
+		note: 'Supply an X-Session-ID header to maintain per-user game state.',
+		endpoints: [
+			'GET  /healthz',
+			'GET  /v1/state',
+			'GET  /v1/prices[?loc=<location>]',
+			'POST /v1/buy    { code, quantity }',
+			'POST /v1/sell   { code, quantity }',
+			'POST /v1/travel { to }',
+			'POST /v1/skip',
+		],
+	};
+
+	app.get('/', (req, res) => {
+		res.format({
+			'text/html': () => {
+				res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DrugRunnerMan API</title>
+  <style>
+    body { font-family: monospace; max-width: 640px; margin: 2rem auto; padding: 0 1rem; background: #111; color: #cfc; }
+    h1 { color: #0f0; }
+    code { background: #222; padding: 2px 6px; border-radius: 3px; }
+    ul { line-height: 2; }
+    .note { color: #fa0; }
+  </style>
+</head>
+<body>
+  <h1>DrugRunnerMan API</h1>
+  <p class="note">Supply an <code>X-Session-ID</code> header to maintain per-user game state.</p>
+  <h2>Endpoints</h2>
+  <ul>
+    ${apiIndex.endpoints.map((e) => `<li><code>${e}</code></li>`).join('\n    ')}
+  </ul>
+</body>
+</html>`);
+			},
+			default: () => {
+				res.json(apiIndex);
+			},
 		});
 	});
 

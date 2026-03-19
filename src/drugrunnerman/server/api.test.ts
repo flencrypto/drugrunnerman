@@ -9,8 +9,16 @@ beforeEach(async () => {
 });
 
 describe('GET /', () => {
-	it('returns API index with endpoint list', async () => {
-		const res = await request(app).get('/');
+	it('returns HTML landing page for browser requests', async () => {
+		const res = await request(app).get('/').set('Accept', 'text/html,application/xhtml+xml,*/*');
+		expect(res.status).toBe(200);
+		expect(res.headers['content-type']).toMatch(/text\/html/);
+		expect(res.text).toContain('DrugRunnerMan API');
+		expect(res.text).toContain('/v1/state');
+	});
+
+	it('returns JSON index for API clients', async () => {
+		const res = await request(app).get('/').set('Accept', 'application/json');
 		expect(res.status).toBe(200);
 		expect(res.body).toHaveProperty('name', 'drugrunnerman-api');
 		expect(res.body).toHaveProperty('endpoints');
