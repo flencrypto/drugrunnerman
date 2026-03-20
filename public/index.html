@@ -2261,7 +2261,15 @@
 			let qaActiveChallenge = null;
 			let qaHitModeActive = false;
 			let qaChallengeEndsAt = null;
-			let qaNextChallengeInMs = 6000 + Math.floor(Math.random() * 12000);
+			const QA_NEXT_CHALLENGE_BASE_MS = 6000;
+			const QA_NEXT_CHALLENGE_JITTER_MS = 12000;
+			const QA_CHALLENGE_BOOST_BY_CADENCE = {
+				off: 1.8,
+				light: 1.35,
+				standard: 1,
+				chaos: 0.6,
+			};
+			let qaNextChallengeInMs = QA_NEXT_CHALLENGE_BASE_MS + Math.floor(Math.random() * QA_NEXT_CHALLENGE_JITTER_MS);
 			let qaChallengeTimer = null;
 			let qaChallengeExpiryTimer = null;
 			let setupConfig = {
@@ -2430,14 +2438,7 @@
 			function scheduleChallengeSpawn() {
 				if (qaChallengeTimer) clearTimeout(qaChallengeTimer);
 				if (qaHitModeActive) return;
-				const challengeBoost =
-					setupConfig.worldEventCadence === 'chaos'
-						? 0.6
-						: setupConfig.worldEventCadence === 'light'
-							? 1.35
-							: setupConfig.worldEventCadence === 'off'
-								? 1.8
-								: 1;
+				const challengeBoost = QA_CHALLENGE_BOOST_BY_CADENCE[setupConfig.worldEventCadence] ?? 1;
 				qaChallengeTimer = setTimeout(() => {
 					const challenge = randomFrom(CHALLENGES);
 					qaActiveChallenge = challenge;

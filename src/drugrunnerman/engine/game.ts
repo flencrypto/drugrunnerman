@@ -108,8 +108,17 @@ export class Game {
 		const worldEventCadence = config.worldEventCadence ?? 'standard';
 		this.personalLifeMode = config.personalLifeMode ?? 'off';
 		this.difficulty = config.difficulty ?? 'normal';
-		this.gameLengthMode =
-			config.gameLength ?? (maxDays <= 7 ? '7d' : maxDays >= 360 ? '12m' : maxDays > 1000 ? 'forever' : '30d');
+		if (config.gameLength) {
+			this.gameLengthMode = config.gameLength;
+		} else if (maxDays > 1000) {
+			this.gameLengthMode = 'forever';
+		} else if (maxDays >= 360) {
+			this.gameLengthMode = '12m';
+		} else if (maxDays <= 7) {
+			this.gameLengthMode = '7d';
+		} else {
+			this.gameLengthMode = '30d';
+		}
 
 		if (!Number.isFinite(startingCash) || startingCash < 0) {
 			throw new GameRuleError('startingCash must be a non-negative finite number');
@@ -179,7 +188,7 @@ export class Game {
 			throw new GameRuleError(`Unknown location: ${loc}`);
 		}
 		const cacheKey = `${this.day}:${loc}:${this.globalMood}:${this.activeWorldEvents
-			.map((e) => `${e.event.message}:${e.expiresDay}`)
+			.map((e) => `${e.event.type}:${e.event.category ?? 'none'}:${e.expiresDay}`)
 			.join('|')}`;
 		const cached = this.priceBook.get(cacheKey);
 		if (cached) {
@@ -617,6 +626,7 @@ export class Game {
 	}
 
 	private currentMonthIndex(): number {
+		// Simplified 30-day months for deterministic turn-based pacing across all game lengths.
 		return Math.floor((this.day - 1) / 30) % 12;
 	}
 
