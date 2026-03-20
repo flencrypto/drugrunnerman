@@ -8,13 +8,11 @@ permissions:
   contents: read
 
 jobs:
-
   install-dependencies:
     runs-on: ubuntu-latest
     container:
       image: node:18-alpine
     steps:
-
       - uses: actions/checkout@v4
 
       - name: install tar (for actions/cache)
@@ -46,7 +44,6 @@ jobs:
     container:
       image: node:18-alpine
     steps:
-
       - uses: actions/checkout@v4
 
       - uses: actions/download-artifact@v4
@@ -64,7 +61,6 @@ jobs:
     container:
       image: node:18-alpine
     steps:
-
       - uses: actions/checkout@v4
 
       - uses: actions/download-artifact@v4
@@ -82,7 +78,6 @@ jobs:
     container:
       image: node:18-alpine
     steps:
-
       - uses: actions/checkout@v4
 
       - uses: actions/download-artifact@v4
