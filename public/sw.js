@@ -36,9 +36,15 @@ self.addEventListener('fetch', (event) => {
 	// Only handle same-origin requests
 	if (url.origin !== self.location.origin) return;
 
-	// API requests: network-first, cache fallback
-	if (url.pathname.startsWith('/v1/') || url.pathname === '/healthz') {
+	// Cacheable API endpoints (not session-scoped): network-first, cache fallback
+	if (url.pathname === '/v1/shop' || url.pathname === '/healthz') {
 		event.respondWith(networkFirst(request));
+		return;
+	}
+
+	// Session-scoped API endpoints: network-only (no caching to avoid cross-session contamination)
+	if (url.pathname.startsWith('/v1/')) {
+		event.respondWith(fetch(request));
 		return;
 	}
 

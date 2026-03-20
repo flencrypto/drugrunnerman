@@ -179,3 +179,61 @@ describe('404 handler', () => {
 		expect(res.body).toEqual({ error: 'Not found' });
 	});
 });
+
+describe('GET /v1/shop', () => {
+	it('returns list of shop items', async () => {
+		const res = await request(app).get('/v1/shop');
+		expect(res.status).toBe(200);
+		expect(res.body).toHaveProperty('items');
+		expect(Array.isArray(res.body.items)).toBe(true);
+		expect(res.body.items.length).toBeGreaterThan(0);
+	});
+
+	it('each item has required fields', async () => {
+		const res = await request(app).get('/v1/shop');
+		for (const item of res.body.items) {
+			expect(item).toHaveProperty('code');
+			expect(item).toHaveProperty('name');
+			expect(item).toHaveProperty('emoji');
+			expect(item).toHaveProperty('price');
+			expect(item).toHaveProperty('description');
+			expect(item).toHaveProperty('type');
+			expect(['permanent', 'consumable']).toContain(item.type);
+		}
+	});
+});
+
+describe('POST /v1/shop/buy', () => {
+	it('successfully buys a shop item and returns updated state', async () => {
+		const res = await request(app).post('/v1/shop/buy').send({ code: 'PISTOL' });
+		expect(res.status).toBe(200);
+		expect(res.body).toHaveProperty('state');
+		expect(res.body.state.ownedItems).toContain('PISTOL');
+	});
+
+	it('returns 422 when buying an item already owned', async () => {
+		await request(app).post('/v1/shop/buy').send({ code: 'PISTOL' });
+		const res = await request(app).post('/v1/shop/buy').send({ code: 'PISTOL' });
+		expect(res.status).toBe(422);
+		expect(res.body).toHaveProperty('error');
+	});
+
+	it('returns 422 when player cannot afford the item', async () => {
+		// BOAT costs $5000, but player starts with $1000
+		const res = await request(app).post('/v1/shop/buy').send({ code: 'BOAT' });
+		expect(res.status).toBe(422);
+		expect(res.body).toHaveProperty('error');
+	});
+
+	it('returns 400 for invalid request body', async () => {
+		const res = await request(app).post('/v1/shop/buy').send({});
+		expect(res.status).toBe(400);
+		expect(res.body).toHaveProperty('error');
+	});
+
+	it('returns 400 for unknown item code', async () => {
+		const res = await request(app).post('/v1/shop/buy').send({ code: 'UNKNOWN' });
+		expect(res.status).toBe(400);
+		expect(res.body).toHaveProperty('error');
+	});
+});

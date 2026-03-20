@@ -264,7 +264,7 @@ export class Game {
 	/** Buy a shop item. Returns the item code. */
 	buyItem(item: ShopItem): void {
 		this.ensureGameInProgress();
-		if (item.type === 'permanent' && this.ownedItemsSet.has(item.code)) {
+		if (this.ownedItemsSet.has(item.code)) {
 			throw new GameRuleError(`Already own: ${item.name}`);
 		}
 		if (item.price > this.cash) {

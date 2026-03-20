@@ -2389,9 +2389,13 @@
 					title.textContent = '💥 SHOOTOUT!';
 					title.className = 'overlay-title shootout';
 					const lost = fmtItems(enc.inventoryLost);
-					msg.innerHTML =
-						`Shots fired! You escaped but lost half your stash!` +
-						(lost ? `<br>Lost: <strong style="color:var(--yellow)">${lost}</strong>` : '');
+					if (lost) {
+						msg.innerHTML =
+							`Shots fired! You escaped but lost some of your stash.` +
+							`<br>Lost: <strong style="color:var(--yellow)">${lost}</strong>`;
+					} else {
+						msg.innerHTML = `Shots fired! You escaped without losing any of your stash.`;
+					}
 				}
 
 				// Chase stickmen
@@ -2468,12 +2472,12 @@
      CITY MAP DATA & RENDERERS
   ───────────────────────────────────────── */
 			const MOB_CITIES = [
-				{ name: 'Seattle',   key: 'Seattle',   x: '8%',  y: '25%', color: 'cyan'    },
-				{ name: 'Denver',    key: 'Denver',    x: '18%', y: '36%', color: 'lime'    },
-				{ name: 'Medell\xedn', key: 'Medellin', x: '30%', y: '58%', color: 'lime'   },
-				{ name: 'Culiac\xe1n', key: 'Culiacan', x: '47%', y: '34%', color: 'emerald' },
-				{ name: 'Kabul',     key: 'Kabul',     x: '65%', y: '48%', color: 'red'     },
-				{ name: 'Amsterdam', key: 'Amsterdam', x: '78%', y: '22%', color: 'orange'  },
+				{ name: 'Seattle',   key: 'Seattle',   x: '8%',  y: '25%', color: 'cyan',    spec: 'FEN'  },
+				{ name: 'Denver',    key: 'Denver',    x: '18%', y: '36%', color: 'lime',    spec: 'CAN'  },
+				{ name: 'Medell\xedn', key: 'Medellin', x: '30%', y: '58%', color: 'lime',   spec: 'COC'  },
+				{ name: 'Culiac\xe1n', key: 'Culiacan', x: '47%', y: '34%', color: 'emerald', spec: 'METH' },
+				{ name: 'Kabul',     key: 'Kabul',     x: '65%', y: '48%', color: 'red',     spec: 'HER'  },
+				{ name: 'Amsterdam', key: 'Amsterdam', x: '78%', y: '22%', color: 'orange',  spec: 'MDM'  },
 			];
 
 			function renderMobileCities() {
@@ -2482,8 +2486,8 @@
 				if (!el) return;
 				el.innerHTML = MOB_CITIES.map((c) => {
 					const isHere = loc === c.key;
-					const label = isHere && prices
-						? fmt$(Object.values(prices)[0] || 0)
+					const label = isHere && prices && prices[c.spec] !== undefined
+						? fmt$(prices[c.spec])
 						: c.name.slice(0, 3).toUpperCase();
 					return `<div class="mob-city" style="left:${c.x};top:${c.y}">
             <div class="mob-city-dot${isHere ? ' here' : ''}"></div>
