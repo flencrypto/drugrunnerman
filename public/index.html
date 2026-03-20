@@ -31,6 +31,7 @@
 				--muted: #888;
 				--danger: #ff4444;
 				--radius: 12px;
+				--setup-meta-size: 0.72rem;
 			}
 
 			/* ===== Reset ===== */
@@ -1576,6 +1577,7 @@
 		.dd-runner-ring { position: absolute; border-radius: 50%; border: 1px solid; }
 		.dd-ring-a { inset: 12px; border-color: rgba(43,242,110,0.4); }
 		.dd-ring-b { inset: 28px; border-color: rgba(43,242,110,0.3); }
+		.dd-ring-c { inset: 44px; border-color: rgba(43,242,110,0.2); }
 
 		/* Setup screen */
 		.setup-screen {
@@ -1608,7 +1610,7 @@
 			z-index: 1;
 		}
 		.setup-eyebrow {
-			font-size: 0.62rem;
+			font-size: 0.75rem;
 			text-transform: uppercase;
 			letter-spacing: 0.3em;
 			color: rgba(34, 211, 238, 0.85);
@@ -1631,12 +1633,12 @@
 			gap: 4px;
 		}
 		.setup-label span {
-			font-size: 0.72rem;
+			font-size: var(--setup-meta-size);
 			color: #c7d2fe;
 		}
 		.setup-select {
 			padding: 8px;
-			background: rgba(3, 10, 18, 0.8);
+			background: rgba(3, 10, 18, 0.96);
 			color: #e2e8f0;
 			border: 1px solid rgba(34, 211, 238, 0.28);
 			border-radius: 10px;
@@ -1648,7 +1650,7 @@
 		}
 		.setup-summary {
 			margin-top: 4px;
-			font-size: 0.72rem;
+			font-size: var(--setup-meta-size);
 			color: #93c5fd;
 		}
 		.setup-start-btn {
@@ -1666,7 +1668,11 @@
 		.setup-start-btn:hover {
 			filter: brightness(1.08);
 		}
-		.dd-ring-c { inset: 44px; border-color: rgba(43,242,110,0.2); }
+		.setup-start-btn:focus {
+			outline: none;
+			border-color: rgba(34, 211, 238, 0.85);
+			box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.25), 0 0 18px rgba(34, 211, 238, 0.28);
+		}
 		.dd-runner-streak {
 			position: absolute;
 			bottom: 48px; left: 0;
