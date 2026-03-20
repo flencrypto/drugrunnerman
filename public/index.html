@@ -1797,6 +1797,52 @@
 			<div id="loading-sm"></div>
 			<div class="loading-text">Loading DrugRunnerMan…</div>
 		</div>
+		<div id="setup-screen" style="display:none;min-height:100dvh;align-items:center;justify-content:center;padding:20px">
+			<div style="width:100%;max-width:460px;border:1px solid #2a2a4a;border-radius:14px;background:#101827;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,0.35)">
+				<div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.2em;color:#94a3b8">Game Setup</div>
+				<h2 style="margin-top:6px;font-size:1.2rem;color:#fff">DrugRunnerMan — Options</h2>
+				<div style="margin-top:14px;display:grid;gap:10px">
+					<label style="display:grid;gap:4px">
+						<span style="font-size:0.72rem;color:#cbd5e1">Game Length</span>
+						<select id="setup-game-length" style="padding:8px;background:#0b1220;color:#e2e8f0;border:1px solid #334155;border-radius:8px">
+							<option value="7d">7 Days</option>
+							<option value="30d" selected>30 Days</option>
+							<option value="12m">12 Months</option>
+							<option value="forever">Forever</option>
+						</select>
+					</label>
+					<label style="display:grid;gap:4px">
+						<span style="font-size:0.72rem;color:#cbd5e1">Difficulty</span>
+						<select id="setup-difficulty" style="padding:8px;background:#0b1220;color:#e2e8f0;border:1px solid #334155;border-radius:8px">
+							<option value="easy-peasy">Easy Peasy</option>
+							<option value="easy">Easy</option>
+							<option value="normal" selected>Normal</option>
+							<option value="hard">Hard</option>
+							<option value="nightmare">Nightmare</option>
+						</select>
+					</label>
+					<label style="display:grid;gap:4px">
+						<span style="font-size:0.72rem;color:#cbd5e1">World Event Satire</span>
+						<select id="setup-world-events" style="padding:8px;background:#0b1220;color:#e2e8f0;border:1px solid #334155;border-radius:8px">
+							<option value="off">Off</option>
+							<option value="light">Light</option>
+							<option value="standard" selected>Standard</option>
+							<option value="chaos">Chaos Mode</option>
+						</select>
+					</label>
+					<label style="display:grid;gap:4px">
+						<span style="font-size:0.72rem;color:#cbd5e1">Personal Life Mode</span>
+						<select id="setup-personal-life" style="padding:8px;background:#0b1220;color:#e2e8f0;border:1px solid #334155;border-radius:8px">
+							<option value="off">Off</option>
+							<option value="light" selected>Light</option>
+							<option value="full">Full</option>
+						</select>
+					</label>
+					<div id="setup-summary" style="margin-top:4px;font-size:0.72rem;color:#94a3b8">Recommended: 30 Days · Normal · Standard · Light</div>
+					<button id="setup-start-btn" style="margin-top:4px;padding:10px;border:none;border-radius:8px;background:#0891b2;color:white;font-weight:800;letter-spacing:0.08em;cursor:pointer">START RUN</button>
+				</div>
+			</div>
+		</div>
 
 		<!-- ════════════ GAME ════════════ -->
 		<div id="game" style="display: none">
@@ -2218,6 +2264,12 @@
 			let qaNextChallengeInMs = 6000 + Math.floor(Math.random() * 12000);
 			let qaChallengeTimer = null;
 			let qaChallengeExpiryTimer = null;
+			let setupConfig = {
+				gameLength: '30d',
+				difficulty: 'normal',
+				worldEventCadence: 'standard',
+				personalLifeMode: 'light',
+			};
 
 			async function api(method, path, body) {
 				const res = await fetch(path, {
@@ -2232,6 +2284,11 @@
 
 			async function loadState() {
 				const d = await api('GET', '/v1/state');
+				state = d.state;
+				prices = d.prices;
+			}
+			async function configureGame() {
+				const d = await api('POST', '/v1/game/setup', setupConfig);
 				state = d.state;
 				prices = d.prices;
 			}
@@ -2373,6 +2430,14 @@
 			function scheduleChallengeSpawn() {
 				if (qaChallengeTimer) clearTimeout(qaChallengeTimer);
 				if (qaHitModeActive) return;
+				const challengeBoost =
+					setupConfig.worldEventCadence === 'chaos'
+						? 0.6
+						: setupConfig.worldEventCadence === 'light'
+							? 1.35
+							: setupConfig.worldEventCadence === 'off'
+								? 1.8
+								: 1;
 				qaChallengeTimer = setTimeout(() => {
 					const challenge = randomFrom(CHALLENGES);
 					qaActiveChallenge = challenge;
@@ -2384,7 +2449,7 @@
 					qaNextChallengeInMs = 10000 + Math.floor(Math.random() * 18000);
 					startChallengeExpiryWatcher();
 					renderQuickAccess();
-				}, qaNextChallengeInMs);
+				}, Math.floor(qaNextChallengeInMs * challengeBoost));
 			}
 			function startChallengeExpiryWatcher() {
 				if (qaChallengeExpiryTimer) clearInterval(qaChallengeExpiryTimer);
@@ -2466,6 +2531,46 @@
 				qaPhoneOpen = !qaPhoneOpen;
 				if (qaPhoneOpen) qaMessages = qaMessages.map((m) => ({ ...m, unread: false }));
 				renderQuickAccess();
+			}
+			function initSetupScreen() {
+				const setupScreen = document.getElementById('setup-screen');
+				const loading = document.getElementById('loading');
+				const game = document.getElementById('game');
+				const start = document.getElementById('setup-start-btn');
+				const summary = document.getElementById('setup-summary');
+				const gl = document.getElementById('setup-game-length');
+				const diff = document.getElementById('setup-difficulty');
+				const we = document.getElementById('setup-world-events');
+				const life = document.getElementById('setup-personal-life');
+
+				const refreshSummary = () => {
+					setupConfig = {
+						gameLength: gl.value,
+						difficulty: diff.value,
+						worldEventCadence: we.value,
+						personalLifeMode: life.value,
+					};
+					summary.textContent = `Selected: ${gl.options[gl.selectedIndex].text} · ${diff.options[diff.selectedIndex].text} · ${we.options[we.selectedIndex].text} · ${life.options[life.selectedIndex].text}`;
+				};
+
+				[gl, diff, we, life].forEach((el) => el.addEventListener('change', refreshSummary));
+				refreshSummary();
+
+				start.addEventListener('click', async () => {
+					setupScreen.style.display = 'none';
+					loading.style.display = 'flex';
+					try {
+						await configureGame();
+						loading.style.display = 'none';
+						game.style.display = 'block';
+						renderAll();
+						scheduleChallengeSpawn();
+					} catch (e) {
+						loading.style.display = 'none';
+						setupScreen.style.display = 'flex';
+						toast(e.message || 'Setup failed', 'err');
+					}
+				});
 			}
 
 			/* ─────────────────────────────────────────
@@ -2994,13 +3099,12 @@
 				document.getElementById('event-ok').addEventListener('click', closeMarketEvent);
 				document.getElementById('qa-target-zone').addEventListener('click', handleQuickAccessClick);
 				document.getElementById('qa-phone-toggle').addEventListener('click', togglePhone);
+				initSetupScreen();
+				document.getElementById('loading').style.display = 'none';
+				document.getElementById('setup-screen').style.display = 'flex';
 
 				try {
-					await Promise.all([loadState(), loadShop()]);
-					document.getElementById('loading').style.display = 'none';
-					document.getElementById('game').style.display = 'block';
-					renderAll();
-					scheduleChallengeSpawn();
+					await loadShop();
 				} catch (e) {
 					document.querySelector('.loading-text').innerHTML =
 						'Could not connect to server.<br>Make sure the API is running.';

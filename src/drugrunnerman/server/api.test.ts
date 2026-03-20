@@ -48,6 +48,28 @@ describe('GET /v1/state', () => {
 	});
 });
 
+describe('POST /v1/game/setup', () => {
+	it('applies requested setup and returns configured state', async () => {
+		const sid = 'setup-session';
+		const res = await request(app).post('/v1/game/setup').set('X-Session-ID', sid).send({
+			gameLength: '7d',
+			difficulty: 'hard',
+			worldEventCadence: 'chaos',
+			personalLifeMode: 'light',
+		});
+		expect(res.status).toBe(200);
+		expect(res.body.state.maxDays).toBe(7);
+		expect(res.body.state.cash).toBe(2500);
+		expect(res.body.state.capacity).toBe(70);
+	});
+
+	it('returns 400 for invalid setup payload', async () => {
+		const res = await request(app).post('/v1/game/setup').send({ gameLength: 'bad' });
+		expect(res.status).toBe(400);
+		expect(res.body).toHaveProperty('error');
+	});
+});
+
 describe('GET /v1/prices', () => {
 	it('returns prices for current location when no loc param given', async () => {
 		const res = await request(app).get('/v1/prices');

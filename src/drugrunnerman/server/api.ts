@@ -1,7 +1,7 @@
 import path from 'path';
 import express from 'express';
 import { z } from 'zod';
-import { Game, GameRuleError } from '../engine/game';
+import { Game, GameRuleError, GameConfig } from '../engine/game';
 import type { Drug } from '../models/drug';
 import type { Location } from '../models/location';
 import type { ShopItem } from '../models/shopItem';
@@ -30,15 +30,41 @@ const shopBuyBodySchema = z.object({
 	code: z.enum(shopItemCodes as [string, ...string[]]),
 });
 
+const setupBodySchema = z.object({
+	gameLength: z.enum(['7d', '30d', '12m', 'forever']),
+	difficulty: z.enum(['easy-peasy', 'easy', 'normal', 'hard', 'nightmare']),
+	worldEventCadence: z.enum(['off', 'light', 'standard', 'chaos']),
+	personalLifeMode: z.enum(['off', 'light', 'full']),
+});
+
 export async function createApp() {
 	const gameSessions = new Map<string, Game>();
+	const gameConfigs = new Map<string, GameConfig>();
+
+	const difficultyConfig: Record<string, Pick<GameConfig, 'startingCash' | 'capacity'>> = {
+		'easy-peasy': { startingCash: 100000, capacity: 1500 },
+		easy: { startingCash: 50000, capacity: 200 },
+		normal: { startingCash: 5000, capacity: 100 },
+		hard: { startingCash: 2500, capacity: 70 },
+		nightmare: { startingCash: 1000, capacity: 40 },
+	};
+
+	const lengthConfig: Record<string, Pick<GameConfig, 'maxDays'>> = {
+		'7d': { maxDays: 7 },
+		'30d': { maxDays: 30 },
+		'12m': { maxDays: 360 },
+		forever: { maxDays: 36500 },
+	};
 
 	function getOrCreateGame(sid: string): Game {
 		let game = gameSessions.get(sid);
 		if (!game) {
+			const config = gameConfigs.get(sid);
 			game = new Game(
 				drugsData as unknown as Record<string, Drug>,
 				locationsData as unknown as Record<string, Location>,
+				undefined,
+				config,
 			);
 			gameSessions.set(sid, game);
 		}
@@ -63,6 +89,7 @@ export async function createApp() {
 			'GET  /v1/state',
 			'GET  /v1/prices[?loc=<location>]',
 			'GET  /v1/shop',
+			'POST /v1/game/setup { gameLength, difficulty, worldEventCadence, personalLifeMode }',
 			'POST /v1/buy    { code, quantity }',
 			'POST /v1/sell   { code, quantity }',
 			'POST /v1/travel { to }',
@@ -89,6 +116,25 @@ export async function createApp() {
 	app.get('/v1/state', (req, res) => {
 		const game = getOrCreateGame(sessionId(req));
 		res.json({ state: game.snapshot(), prices: game.prices(game.location) });
+	});
+
+	app.post('/v1/game/setup', (req, res) => {
+		const parsed = setupBodySchema.safeParse(req.body);
+		if (!parsed.success) {
+			res.status(400).json({ error: 'Invalid request body', details: parsed.error.flatten() });
+			return;
+		}
+		const sid = sessionId(req);
+		const config: GameConfig = {
+			...difficultyConfig[parsed.data.difficulty],
+			...lengthConfig[parsed.data.gameLength],
+			worldEventCadence: parsed.data.worldEventCadence,
+			personalLifeMode: parsed.data.personalLifeMode,
+		};
+		gameConfigs.set(sid, config);
+		gameSessions.delete(sid);
+		const game = getOrCreateGame(sid);
+		res.status(200).json({ state: game.snapshot(), prices: game.prices(game.location) });
 	});
 
 	app.get('/v1/prices', (req, res) => {

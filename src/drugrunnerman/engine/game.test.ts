@@ -105,6 +105,28 @@ describe('Game engine', () => {
 		it('throws for non-integer capacity', () => {
 			expect(() => new Game(drugs, locations, rng, { capacity: 2.7 })).toThrow(GameRuleError);
 		});
+
+		it('throws for invalid worldEventCadence', () => {
+			expect(() => new Game(drugs, locations, rng, { worldEventCadence: 'wild' as never })).toThrow(GameRuleError);
+		});
+
+		it('throws for invalid personalLifeMode', () => {
+			expect(() => new Game(drugs, locations, rng, { personalLifeMode: 'wild' as never })).toThrow(GameRuleError);
+		});
+	});
+
+	describe('market event cadence', () => {
+		it('disables market events when cadence is off', () => {
+			const game = new Game(drugs, locations, () => 0, { worldEventCadence: 'off' });
+			const result = game.travel('Seattle');
+			expect(result.marketEvent).toBeNull();
+		});
+
+		it('allows frequent events in chaos mode', () => {
+			const game = new Game(drugs, locations, () => 0.2, { worldEventCadence: 'chaos' });
+			const result = game.travel('Seattle');
+			expect(result.marketEvent).not.toBeNull();
+		});
 	});
 
 	describe('EventBus integration', () => {

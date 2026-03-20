@@ -18,6 +18,8 @@ export interface GameConfig {
 	maxDays?: number;
 	capacity?: number;
 	startingLocation?: string;
+	worldEventCadence?: 'off' | 'light' | 'standard' | 'chaos';
+	personalLifeMode?: 'off' | 'light' | 'full';
 }
 
 export interface PortfolioSnapshot {
@@ -52,6 +54,10 @@ export interface MarketEvent {
 	 */
 	quantity?: number;
 	message: string;
+	policeHeatDelta?: number;
+	travelRiskDelta?: number;
+	challengeFrequencyBoost?: number;
+	priceMultipliers?: Partial<Record<Drug['code'], number>>;
 }
 
 export class Game {
@@ -69,7 +75,8 @@ export class Game {
 	/** Extra capacity added by shop items (e.g. Stash House) */
 	private bonusCapacity = 0;
 	/** Probability that a random market event fires on each travel. Range: 0–1. */
-	private readonly EVENT_PROBABILITY = 0.25;
+	private readonly EVENT_PROBABILITY: number;
+	private readonly personalLifeMode: 'off' | 'light' | 'full';
 
 	constructor(
 		private readonly drugs: Record<string, Drug>,
@@ -80,6 +87,8 @@ export class Game {
 		const startingCash = config.startingCash ?? 1000;
 		const maxDays = config.maxDays ?? 30;
 		const capacity = config.capacity ?? 100;
+		const worldEventCadence = config.worldEventCadence ?? 'standard';
+		this.personalLifeMode = config.personalLifeMode ?? 'off';
 
 		if (!Number.isFinite(startingCash) || startingCash < 0) {
 			throw new GameRuleError('startingCash must be a non-negative finite number');
@@ -90,12 +99,25 @@ export class Game {
 		if (!Number.isInteger(capacity) || capacity <= 0) {
 			throw new GameRuleError('capacity must be a positive integer');
 		}
+		if (!['off', 'light', 'standard', 'chaos'].includes(worldEventCadence)) {
+			throw new GameRuleError('worldEventCadence must be one of: off, light, standard, chaos');
+		}
+		if (!['off', 'light', 'full'].includes(this.personalLifeMode)) {
+			throw new GameRuleError('personalLifeMode must be one of: off, light, full');
+		}
 
 		this.cash = startingCash;
 		this.maxDays = maxDays;
 		this.capacity = capacity;
 		this.location = config.startingLocation ?? 'Denver';
 		this.gameSeed = rng();
+		const cadenceProbability: Record<'off' | 'light' | 'standard' | 'chaos', number> = {
+			off: 0,
+			light: 0.12,
+			standard: 0.25,
+			chaos: 0.55,
+		};
+		this.EVENT_PROBABILITY = cadenceProbability[worldEventCadence];
 
 		this.assertGameData();
 		if (!this.locations[this.location]) {
@@ -188,6 +210,11 @@ export class Game {
 		const from = this.location;
 		this.location = to;
 		this.advanceDay();
+		const eventRng = this.makeSubRng(`event:${this.day}`);
+		const marketEvent = this.generateMarketEvent(eventRng);
+		const policeBoost = (marketEvent?.policeHeatDelta ?? 0) / 100;
+		const travelRiskBoost = marketEvent?.travelRiskDelta ?? 0;
+		const threatWithEvent = Math.min(1, Math.max(0, this.threat + policeBoost + travelRiskBoost));
 
 		const policeRng = this.makeSubRng(`police:${this.day}`);
 
@@ -197,7 +224,7 @@ export class Game {
 			this.ownedItemsSet.delete('BOAT');
 			this.bus.emit({ type: 'itemUsed', item: 'BOAT' });
 		} else {
-			const newState = this.police.step(this.threat, policeRng);
+			const newState = this.police.step(threatWithEvent, policeRng);
 
 			if (newState === CopState.Arrest) {
 				// Fine rate starts at 20%. Lawyer (−60%) and Armor (−40%) stack multiplicatively.
@@ -237,10 +264,8 @@ export class Game {
 			}
 		}
 
-		// Generate a random market event for the new location
-		const eventRng = this.makeSubRng(`event:${this.day}`);
-		const marketEvent = this.generateMarketEvent(eventRng);
 		if (marketEvent) {
+			this.applyMarketEventPricing(marketEvent);
 			// FREE_STASH: immediately add drugs to inventory.
 			// marketEvent.quantity is mutated to reflect the actual amount added
 			// (capped by available bag space), so callers always see the real number.
@@ -307,45 +332,111 @@ export class Game {
 		const roll = rng();
 		const drugCode = drugCodes[Math.floor(rng() * drugCodes.length)];
 		const drugName = this.drugs[drugCode]?.name ?? drugCode;
+		const partyDrug: Drug['code'] = rng() > 0.5 ? 'MDM' : 'COC';
 
-		if (roll < 0.2) {
+		if (roll < 0.12) {
 			return {
 				type: 'PRICE_SPIKE',
-				drugCode,
-				multiplier: 2.0,
-				message: `🚀 Price surge! ${drugName} is selling for double the usual rate.`,
+				drugCode: 'METH',
+				multiplier: 1.8,
+				priceMultipliers: { METH: 1.8, MDM: 0.82 },
+				policeHeatDelta: 10,
+				travelRiskDelta: 0.08,
+				challengeFrequencyBoost: 0.12,
+				message: `📺 President livestreamed a "war on vibes." Meth climbs, MDMA cools, and police heat is up.`,
 			};
-		} else if (roll < 0.4) {
+		} else if (roll < 0.24) {
+			const cityDrug: Drug['code'] = partyDrug;
 			return {
 				type: 'PRICE_CRASH',
-				drugCode,
-				multiplier: 0.45,
-				message: `📉 Market crash! ${drugName} prices have collapsed — bargain time.`,
+				drugCode: cityDrug,
+				multiplier: 1.9,
+				priceMultipliers: cityDrug === 'COC' ? { COC: 1.9 } : { MDM: 1.9 },
+				challengeFrequencyBoost: 0.08,
+				message: `🥂 Prime Minister got caught at a secret afterparty. ${this.drugs[cityDrug].name} demand surges in party circuits.`,
 			};
-		} else if (roll < 0.55) {
+		} else if (roll < 0.36) {
+			const crisisDrug: Drug['code'] = rng() > 0.5 ? 'HER' : 'FEN';
+			return {
+				type: 'HEAT_WAVE',
+				drugCode: crisisDrug,
+				policeHeatDelta: 14,
+				travelRiskDelta: 0.12,
+				priceMultipliers: crisisDrug === 'HER' ? { HER: 0.8 } : { FEN: 0.8 },
+				message: `🛂 Border crackdown announced at 3am. ${this.drugs[crisisDrug].name} is harder to move and police pressure rises.`,
+			};
+		} else if (roll < 0.48) {
+			return {
+				type: 'PRICE_SPIKE',
+				drugCode: 'METH',
+				multiplier: 1.55,
+				priceMultipliers: { METH: 1.55, CAN: 0.9 },
+				message: `📈 Finance minister launched "productivity month." Meth spikes while cannabis softens.`,
+			};
+		} else if (roll < 0.6) {
+			return {
+				type: 'PRICE_SPIKE',
+				drugCode: partyDrug,
+				multiplier: 1.65,
+				priceMultipliers: partyDrug === 'COC' ? { COC: 1.65 } : { MDM: 1.65 },
+				travelRiskDelta: 0.05,
+				message: `🚢 Global shipping delays hit ports. ${this.drugs[partyDrug].name} scarcity pushes prices up.`,
+			};
+		} else if (roll < 0.72) {
+			return {
+				type: 'HOT_TIP',
+				drugCode: 'CAN',
+				priceMultipliers: { CAN: 1.35 },
+				policeHeatDelta: -6,
+				message: `🧘 Celebrity wellness cult trend went viral. Cannabis climbs while heat cools a little.`,
+			};
+		} else if (roll < 0.84) {
+			return {
+				type: 'HEAT_WAVE',
+				policeHeatDelta: 8,
+				travelRiskDelta: 0.1,
+				challengeFrequencyBoost: 0.1,
+				message: `🗳️ Election panic week. Volatility and route risk both increase.`,
+			};
+		} else if (roll < 0.93) {
 			const qty = 5 + Math.floor(rng() * 10);
 			return {
 				type: 'FREE_STASH',
 				drugCode,
 				quantity: qty,
-				message: `📦 Found a stash! You found ${qty} units of ${drugName} on the street.`,
+				challengeFrequencyBoost: 0.18,
+				message: `💳 Banking scare hit the streets. Buyers vanish, but stash drops get frequent. Found ${qty} ${drugName}.`,
 			};
-		} else if (roll < 0.7) {
+		} else if (roll < 0.97) {
 			return {
-				type: 'HOT_TIP',
-				drugCode,
-				message: `🕵️ Street tip: ${drugName} is the hot product here — sell for a premium.`,
+				type: 'PRICE_SPIKE',
+				drugCode: 'MDM',
+				multiplier: 1.75,
+				priceMultipliers: { MDM: 1.75, CAN: 1.4 },
+				message: `🎪 Summer festival season. MDMA and cannabis spike in party cities.`,
 			};
-		} else if (roll < 0.85) {
-			return { type: 'HEAT_WAVE', message: `🚨 Police heat wave! Law enforcement is cracking down in this area.` };
 		} else {
 			return {
-				type: 'BIG_SHIPMENT',
-				drugCode,
-				multiplier: 0.65,
-				message: `🚢 Big shipment arrived! ${drugName} flooded the market — prices are low.`,
+				type: 'HEAT_WAVE',
+				policeHeatDelta: 12,
+				travelRiskDelta: 0.14,
+				priceMultipliers: { HER: 0.88, MDM: 0.88 },
+				message: `❄️ Cold winter crackdown. Routes harden and patrol intensity surges.`,
 			};
 		}
+	}
+
+	private applyMarketEventPricing(event: MarketEvent): void {
+		const cacheKey = `${this.day}:${this.location}`;
+		const current = this.priceBook.get(cacheKey) ?? this.prices(this.location);
+		const next = { ...current };
+		const multipliers =
+			event.priceMultipliers ?? (event.drugCode && event.multiplier ? { [event.drugCode]: event.multiplier } : {});
+		for (const [code, multiplier] of Object.entries(multipliers)) {
+			if (!next[code as Drug['code']] || !multiplier || multiplier <= 0) continue;
+			next[code as Drug['code']] = Math.max(0.01, Number((next[code as Drug['code']] * multiplier).toFixed(2)));
+		}
+		this.priceBook.set(cacheKey, next);
 	}
 
 	private makeSubRng(namespace: string): () => number {
