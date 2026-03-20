@@ -1,8 +1,8 @@
 {
-  "CAN": { "name": "Cannabis", "mu": 2.14, "sigma": 0.10, "unit": "g" },
-  "COC": { "name": "Cocaine", "mu": 120, "sigma": 0.25, "unit": "g" },
-  "HER": { "name": "Heroin", "mu": 128, "sigma": 0.30, "unit": "g", "currency": "USD" },
-  "METH": { "name": "Meth", "mu": 15, "sigma": 0.35, "unit": "g" },
-  "MDM": { "name": "MDMA", "mu": 4.5, "sigma": 0.20, "unit": "tablet" },
-  "FEN": { "name": "Fentanyl pill", "mu": 0.75, "sigma": 0.40, "unit": "pill" }
+	"CAN": { "name": "Cannabis", "mu": 2.14, "sigma": 0.1, "unit": "g" },
+	"COC": { "name": "Cocaine", "mu": 120, "sigma": 0.25, "unit": "g" },
+	"HER": { "name": "Heroin", "mu": 128, "sigma": 0.3, "unit": "g", "currency": "USD" },
+	"METH": { "name": "Meth", "mu": 15, "sigma": 0.35, "unit": "g" },
+	"MDM": { "name": "MDMA", "mu": 4.5, "sigma": 0.2, "unit": "tablet" },
+	"FEN": { "name": "Fentanyl pill", "mu": 0.75, "sigma": 0.4, "unit": "pill" }
 }

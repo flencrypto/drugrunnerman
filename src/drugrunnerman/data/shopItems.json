@@ -1,0 +1,58 @@
+{
+	"PISTOL": {
+		"name": "Pistol",
+		"emoji": "🔫",
+		"price": 800,
+		"description": "Increases your chance of escaping a shootout without losing inventory.",
+		"type": "permanent"
+	},
+	"CAR": {
+		"name": "Fast Car",
+		"emoji": "🚗",
+		"price": 2000,
+		"description": "Reduces police threat by 25% when travelling between cities.",
+		"type": "permanent"
+	},
+	"STASH": {
+		"name": "Stash House",
+		"emoji": "🏠",
+		"price": 3000,
+		"description": "Adds 50 units to your carry capacity.",
+		"type": "permanent"
+	},
+	"ARMOR": {
+		"name": "Body Armor",
+		"emoji": "🛡️",
+		"price": 1500,
+		"description": "Reduces the cash fine when arrested by 40%.",
+		"type": "permanent"
+	},
+	"INFORM": {
+		"name": "Informant",
+		"emoji": "🕵️",
+		"price": 1000,
+		"description": "Tips you off about the best deal at your next destination (one use).",
+		"type": "consumable"
+	},
+	"MEDKIT": {
+		"name": "Med Kit",
+		"emoji": "💊",
+		"price": 400,
+		"description": "Prevents inventory loss during a shootout (one use).",
+		"type": "consumable"
+	},
+	"LAWYER": {
+		"name": "Lawyer on Retainer",
+		"emoji": "⚖️",
+		"price": 2500,
+		"description": "Reduces any arrest fine by 60% — permanently.",
+		"type": "permanent"
+	},
+	"BOAT": {
+		"name": "Speedboat",
+		"emoji": "🛥️",
+		"price": 5000,
+		"description": "Once per game, skip a police encounter completely.",
+		"type": "consumable"
+	}
+}

@@ -1,35 +1,24 @@
 {
-  "compilerOptions": {
-    "target": "esnext",
-    "module": "commonjs",
-    "strict": true,
-    "moduleResolution": "node",
-    "skipLibCheck": true,
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
-    "useDefineForClassFields": true,
-    "sourceMap": true,
-    "baseUrl": ".",
-    "noUnusedLocals": true,
-    "types": [
-      "jest"
-    ],
-    "paths": {
-      "@/*": [
-        "src/*"
-      ]
-    },
-    "lib": [
-      "esnext"
-    ]
-  },
-  "include": [
-    "src/**/*.ts",
-    "netlify/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+	"compilerOptions": {
+		"target": "esnext",
+		"module": "commonjs",
+		"strict": true,
+		"moduleResolution": "node",
+		"skipLibCheck": true,
+		"resolveJsonModule": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"forceConsistentCasingInFileNames": true,
+		"useDefineForClassFields": true,
+		"sourceMap": true,
+		"baseUrl": ".",
+		"noUnusedLocals": true,
+		"types": ["jest"],
+		"paths": {
+			"@/*": ["src/*"]
+		},
+		"lib": ["esnext"]
+	},
+	"include": ["src/**/*.ts", "netlify/**/*.ts"],
+	"exclude": ["node_modules"]
 }

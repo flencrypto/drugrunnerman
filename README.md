@@ -1,80 +1,160 @@
 <div align="center">
 
-<h1>🧪 Drugrunnerman</h1>
+<h1>DrugRunnerMan 🏃</h1>
 
-<p><strong>A turn-based drug trading simulation game with a CLI player, web UI, and REST API.</strong></p>
+A fast-paced street-trading simulation. Buy low, sell high, dodge the cops, and retire rich — in 30 days.
 
-<p>
-  <img alt="Beta" src="https://img.shields.io/badge/release-beta-orange" />
-  <img alt="License: AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-blue" />
-  <img alt="Node >=14.5" src="https://img.shields.io/badge/node-%3E%3D14.5.0-brightgreen" />
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-4.8-blue?logo=typescript" />
-</p>
+[![PWA Ready](https://img.shields.io/badge/PWA-ready-brightgreen)](#pwa--offline-play)
 
 </div>
 
-> **⚠️ Beta Notice**
-> Drugrunnerman is currently in **beta**. Core gameplay is functional, but you may encounter rough edges, missing features, or breaking API changes before v1.0. Bug reports and feedback are very welcome — please [open an issue](../../issues).
+---
+
+## What is DrugRunnerMan?
+
+DrugRunnerMan is a browser-based, turn-based trading simulation inspired by classic street-trading games (Dope Wars, Drug Wars).
+You play as a street runner with **$1,000 cash** and **100 units of carry capacity**.  
+Over **30 days** you travel between six cities, buy and sell drugs at fluctuating market prices, avoid police encounters, and try to maximise your final cash balance.
+
+It ships as a **Progressive Web App (PWA)** that can be installed on any device and played fully offline once cached.
 
 ---
 
-## Table of Contents
+## Tech Stack
 
-- [Overview](#overview)
-- [Features](#features)
-- [Requirements](#requirements)
-- [Getting Started](#getting-started)
-- [Gameplay Guide](#gameplay-guide)
-  - [Drugs Reference](#drugs-reference)
-  - [Locations Reference](#locations-reference)
-  - [Police AI](#police-ai)
-- [REST API](#rest-api)
-  - [Session Management](#session-management)
-  - [Endpoints](#endpoints)
-  - [Response Shapes](#response-shapes)
-- [Configuration](#configuration)
-- [Deploying to Netlify](#deploying-to-netlify)
-- [Development](#development)
-- [Known Limitations](#known-limitations)
-- [License](#license)
-
----
-
-## Overview
-
-Drugrunnerman is a **text-based economic strategy game** inspired by the classic "Drug Wars" genre. You start with **$1,000 cash** and **100 units of cargo space** and have **30 days** to turn a profit by buying drugs cheap in production cities and selling them at a markup elsewhere — all while evading an increasingly aggressive police AI.
-
-The game ships with three interfaces that share the same engine:
-
-| Interface | Command | Description |
-|-----------|---------|-------------|
-| **CLI** | `yarn play` | Interactive terminal prompts via Inquirer |
-| **Web UI** | `yarn api` then open `http://localhost:3000` | Neon retro single-page app |
-| **REST API** | `yarn api` | Headless JSON API for custom clients |
+| Layer                 | Technology                                                                   |
+| --------------------- | ---------------------------------------------------------------------------- |
+| **Game engine**       | TypeScript class-based engine (`Game`, `PoliceAI`, `EventBus`)               |
+| **Price model**       | Log-normal random price generator seeded by game-ID + day + city             |
+| **API server**        | Node.js / Express REST API with Zod request validation                       |
+| **Serverless deploy** | Netlify Functions via `serverless-http` wrapper                              |
+| **Frontend**          | Vanilla JS single-page app served from `public/index.html`                   |
+| **PWA**               | `manifest.json` + Service Worker with cache-first / network-first strategies |
+| **Testing**           | Jest + Supertest + fast-check property tests                                 |
+| **CI**                | GitHub Actions (lint → test → deploy)                                        |
 
 ---
 
 ## Features
 
-- 🌍 **6 real-world cities** — Denver, Medellín, Kabul, Culiacán, Amsterdam, Seattle
-- 💊 **6 drug types** — each with unique base prices and volatility
-- 📈 **Dynamic market prices** — randomised each day with seeded RNG for reproducibility
-- 🚔 **Police AI state machine** — threat escalates with cargo load; outcomes include patrol, pursuit, shootout, and arrest
-- 🔁 **30-day trading loop** — buy, sell, travel, or skip each turn
-- 🌐 **Multi-session REST API** — stateful per `X-Session-ID` header
-- ☁️ **Netlify serverless deployment** — one-click deploy via AWS Lambda adapter
-- ✅ **Typed & tested** — TypeScript strict mode, Jest unit + integration tests, Zod request validation
+- 🛒 **Drug Market** — Six drugs (Cannabis, Cocaine, Heroin, Meth, MDMA, Fentanyl) with city-specific price adjustments and random daily volatility
+- ✈️ **Travel** — Move between Denver, Medellín, Kabul, Culiacán, Amsterdam, Seattle
+- 🚔 **Police AI** — State-machine cop (Patrol → Pursuit → Arrest/Shootout) whose aggression scales with how loaded your bag is
+- 🏪 **Black Market Shop** — Spend cash on assets that improve your odds (see [Shop Items](#shop-items) below)
+- 🎲 **Random Market Events** — Triggered on every travel (price surges, market crashes, free stashes, heat waves…)
+- 📱 **PWA / Installable** — Works offline; can be pinned to home screen on iOS & Android
+- 🔔 **Push Notification hooks** — Service worker includes push + background-sync stubs for future notifications
+- 🔒 **Session isolation** — Each browser session gets a unique `X-Session-ID`; unlimited concurrent games
 
 ---
 
-## Requirements
+## Shop Items
 
-- **Node.js** v14.5.0 or higher
-- **yarn** or **npm**
+Purchasable from the **🏪 Shop** tab during a game.  
+Items persist for the lifetime of the session.
+
+| Item                  | Cost   | Effect                                                         |
+| --------------------- | ------ | -------------------------------------------------------------- |
+| 🔫 Pistol             | $800   | Cuts inventory loss in a shootout from 50% → 25%               |
+| 🚗 Fast Car           | $2,000 | Reduces police threat by 25% when travelling                   |
+| 🏠 Stash House        | $3,000 | +50 carry capacity (permanent)                                 |
+| 🛡️ Body Armor         | $1,500 | Reduces arrest fine from 20% → 12% of cash                     |
+| 🕵️ Informant          | $1,000 | Tips you off about the best deal at next destination _(1 use)_ |
+| 💊 Med Kit            | $400   | Prevents all inventory loss in a shootout _(1 use)_            |
+| ⚖️ Lawyer on Retainer | $2,500 | Permanently cuts fine to 8% of cash                            |
+| 🛥️ Speedboat          | $5,000 | Skip one police encounter completely _(1 use)_                 |
+
+---
+
+## Random Market Events
+
+Each time you travel there is a **~25% chance** a random street event fires:
+
+| Event            | Effect                                                                                                           |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------- |
+| 🚀 Price Surge   | _Planned:_ a random drug will be at **2× the normal price** — great time to sell                                 |
+| 📉 Market Crash  | _Planned:_ a random drug drops to **0.45× the normal price** — bargain opportunity                              |
+| 📦 Found a Stash | You find **5–15 free units** of a random drug on the street _(implemented)_                                     |
+| 🕵️ Hot Tip       | _Planned:_ informant reveals the best-selling drug in town                                                       |
+| 🚨 Heat Wave     | _Planned:_ police are extra alert — higher chance of an encounter                                                |
+| 🚢 Big Shipment  | _Planned:_ bulk supply arrived; a drug sells at **0.65× normal price**                                          |
+
+> **Note:** Only **Found a Stash** has a concrete gameplay effect in the current build; all other events are cosmetic placeholders for future updates.
+
+---
+
+## Limitations
+
+| Area              | Current limitation                                               |
+| ----------------- | ---------------------------------------------------------------- |
+| **Persistence**   | Game state lives only in server RAM — lost on server restart     |
+| **Multiplayer**   | No leaderboard, no real-time competition                         |
+| **Inventory cap** | Fixed 100 units (extendable via Stash House upgrade)             |
+| **Cities**        | Only six hard-coded cities; no random city generation            |
+| **Economy**       | Prices are stochastic but not reactive to supply/demand dynamics |
+| **Time**          | No real-time component — purely turn-based                       |
+| **Mobile input**  | No swipe gestures; tap-only UI                                   |
+
+---
+
+## Suggested High-Tech Upgrades
+
+> Ideas for future development:
+
+1. **Persistent leaderboard** — Store final scores in a database (Supabase / PlanetScale) with a public `/v1/leaderboard` endpoint
+2. **Dynamic supply/demand model** — Track how much of each drug has been bought/sold globally and adjust μ accordingly (simulated commodity market)
+3. **Real-time multiplayer** — Use WebSockets or Server-Sent Events to show other players' travel moves on the city map
+4. **Procedural city generation** — Algorithmically generate city names, flavor text, and price biases using a seeded city profile
+5. **AI rival runners** — NPC traders that compete for the same drug supplies, driving prices up when they buy
+6. **Crypto / NFT stash receipts** — Mint an NFT for each final score snapshot as a fun provable collectible
+7. **Machine learning price predictions** — Let the player buy an in-game AI trading advisor that predicts next-day prices based on historical volatility
+8. **Augmented Reality mode** — Use the device camera + geolocation to anchor in-game locations to real-world city maps
+9. **Voice interface** — Accept game commands via the Web Speech API ("Buy 10 cannabis")
+10. **Push notifications** — Alert players when prices at their current location drop significantly (service worker already wired for this)
+
+---
+
+## PWA / Offline Play
+
+DrugRunnerMan is a fully-spec PWA:
+
+| Feature            | Status                                                      |
+| ------------------ | ----------------------------------------------------------- |
+| `manifest.json`    | ✅ Linked in `<head>`                                       |
+| Service Worker     | ✅ Cache-first for static assets, network-first for API     |
+| Installable        | ✅ `beforeinstallprompt` banner with one-tap install        |
+| Offline mode       | ✅ Cached shell loads; queued actions show a friendly error |
+| Push notifications | ✅ SW event handler wired (server-side not yet configured)  |
+| Background sync    | ✅ SW sync hook wired (server-side not yet configured)      |
+| iOS splash / icons | ✅ `apple-touch-icon` + `apple-mobile-web-app-capable` meta |
+
+---
+
+## REST API
+
+| Method | Path                    | Body                 | Description                         |
+| ------ | ----------------------- | -------------------- | ----------------------------------- |
+| `GET`  | `/healthz`              | —                    | Health check                        |
+| `GET`  | `/v1/state`             | —                    | Current game state + prices         |
+| `GET`  | `/v1/prices?loc=<name>` | —                    | Prices for a specific location      |
+| `GET`  | `/v1/shop`              | —                    | List all purchasable shop items     |
+| `POST` | `/v1/buy`               | `{ code, quantity }` | Buy drugs                           |
+| `POST` | `/v1/sell`              | `{ code, quantity }` | Sell drugs                          |
+| `POST` | `/v1/travel`            | `{ to }`             | Travel to a new city (advances day) |
+| `POST` | `/v1/skip`              | —                    | Skip a day without travelling       |
+| `POST` | `/v1/shop/buy`          | `{ code }`           | Purchase a shop item                |
+
+Gameplay endpoints (`/v1/buy`, `/v1/sell`, `/v1/travel`, `/v1/skip`, `/v1/shop/buy`) include the full `state` snapshot in their response. `/v1/state` returns `state` + `prices`. `/v1/shop` returns only `{ items }`. `/healthz` returns only `{ status }`.  
+The `/v1/travel` response also includes `policeEncounter` and `marketEvent` fields.
 
 ---
 
 ## Getting Started
+
+### Requirements
+
+- Node.js v14.5.0 or higher
+- yarn or npm
 
 ### 1. Install dependencies
 
@@ -88,12 +168,11 @@ yarn install
 yarn play
 ```
 
-### 3. Start the REST API / Web UI server
+### Start the REST API + web UI
 
 ```bash
 yarn api
-# Server starts at http://localhost:3000
-# Open in a browser for the web UI, or use any HTTP client for the API
+# Open http://localhost:3000
 ```
 
 ### 4. Run tests
@@ -102,237 +181,17 @@ yarn api
 yarn test
 ```
 
-### 5. Build
+### Lint
+
+```bash
+yarn lint
+```
+
+### Build (TypeScript → dist/)
 
 ```bash
 yarn build
-# Compiles TypeScript → dist/
 ```
-
-### 6. Lint & format
-
-```bash
-yarn lint      # ESLint
-yarn format    # Prettier
-```
-
----
-
-## Gameplay Guide
-
-Each day you choose **one** of four actions:
-
-| Action | Effect |
-|--------|--------|
-| **Buy** | Purchase units of a drug at the current location's price |
-| **Sell** | Sell units from your inventory at the current location's price |
-| **Travel** | Move to another city — advances the day and triggers a police check |
-| **Skip** | Do nothing and advance the day |
-
-The game ends when you reach **Day 30** (configurable). Your final score is your remaining cash.
-
-**Tips:**
-- Buy in production cities (low multiplier) and sell in consumer cities.
-- Keep your cargo hold as empty as possible to reduce police threat.
-- Fentanyl (`FEN`) has the highest price volatility — high risk, high reward.
-
-### Drugs Reference
-
-| Code | Name | Base Price | Volatility | Unit |
-|------|------|-----------|-----------|------|
-| `CAN` | Cannabis | $2.14 | Low (10%) | g |
-| `COC` | Cocaine | $120.00 | Medium (25%) | g |
-| `HER` | Heroin | $128.00 | Medium-High (30%) | g |
-| `METH` | Meth | $15.00 | High (35%) | g |
-| `MDM` | MDMA | $4.50 | Medium (20%) | tablet |
-| `FEN` | Fentanyl | $0.75 | Very High (40%) | pill |
-
-Actual prices fluctuate randomly each day within ±`sigma × mu` of the base price, floored at 15% and capped at 400% of `mu`.
-
-### Locations Reference
-
-| City | Cheapest Drug | Notes |
-|------|--------------|-------|
-| Denver | — | Default starting city |
-| Medellín | `COC` | Best place to buy cocaine (0.8× multiplier) |
-| Kabul | `HER` | Best place to buy heroin (0.7× multiplier) |
-| Culiacán | `METH`, `FEN` | Production hub for meth and fentanyl |
-| Amsterdam | `MDM` | Near-source MDMA pricing |
-| Seattle | `FEN` | High consumer prices |
-
-### Police AI
-
-Travelling always triggers a police check. The threat level is proportional to how full your cargo hold is:
-
-```
-threat = usedCapacity / totalCapacity   (0.0 – 1.0)
-```
-
-The AI steps through four states:
-
-1. **Patrol** — Low activity; may escalate to Pursuit based on threat.
-2. **Pursuit** — Actively chasing; will escalate to an encounter.
-3. **Shootout** — You lose **50% of all inventory**.
-4. **Arrest** — All inventory seized + **20% cash fine**.
-
-After any encounter the AI resets to **Patrol**. Keep your hold light to minimise risk.
-
----
-
-## REST API
-
-### Session Management
-
-The API is stateful. Include an `X-Session-ID` header to maintain your game state across requests. If the header is omitted, the `"default"` session is used.
-
-```http
-X-Session-ID: my-unique-game-session
-```
-
-> **Note:** Game state is stored in memory and is lost when the server restarts.
-
-### Endpoints
-
-| Method | Path | Body | Description |
-|--------|------|------|-------------|
-| `GET` | `/healthz` | — | Health check |
-| `GET` | `/v1/state` | — | Current game state + prices at current location |
-| `GET` | `/v1/prices?loc=<name>` | — | Drug prices for a specific location |
-| `POST` | `/v1/buy` | `{ "code": "<CODE>", "quantity": <n> }` | Buy drugs |
-| `POST` | `/v1/sell` | `{ "code": "<CODE>", "quantity": <n> }` | Sell drugs |
-| `POST` | `/v1/travel` | `{ "to": "<city>" }` | Travel to a new city (advances day) |
-| `POST` | `/v1/skip` | — | Skip a day without travelling |
-
-**HTTP status codes:**
-
-| Code | Meaning |
-|------|---------|
-| `200` | Success |
-| `400` | Bad request (invalid body — see `details` field) |
-| `422` | Game rule violation (e.g. not enough cash, over capacity) |
-| `500` | Internal server error |
-
-### Response Shapes
-
-**Game state object** (returned by most endpoints):
-
-```json
-{
-  "state": {
-    "day": 3,
-    "location": "Medellín",
-    "cash": 840.00,
-    "capacity": 100,
-    "usedCapacity": 20,
-    "maxDays": 30,
-    "inventory": {
-      "CAN": 0, "COC": 20, "HER": 0,
-      "METH": 0, "MDM": 0, "FEN": 0
-    }
-  },
-  "prices": {
-    "CAN": 2.01, "COC": 98.40, "HER": 131.20,
-    "METH": 14.60, "MDM": 4.72, "FEN": 0.68
-  }
-}
-```
-
-**Travel response** (may include an optional police encounter):
-
-```json
-{
-  "state": { "..." : "..." },
-  "prices": { "..." : "..." },
-  "policeEncounter": {
-    "outcome": "shootout",
-    "inventoryLost": { "COC": 10 }
-  }
-}
-```
-
-Police encounter `outcome` values:
-
-| Value | Effect |
-|-------|--------|
-| `"arrest"` | All inventory seized; `fine` (20% of cash) deducted |
-| `"shootout"` | `inventoryLost` (50% of each drug) removed from inventory |
-
----
-
-## Configuration
-
-You can customise the game by passing a `GameConfig` object when starting a new session (CLI or embedding the engine directly):
-
-```typescript
-interface GameConfig {
-  startingCash?: number;       // Default: 1000
-  maxDays?: number;            // Default: 30
-  capacity?: number;           // Default: 100
-  startingLocation?: string;   // Default: "Denver"
-}
-```
-
----
-
-## Deploying to Netlify
-
-The repo includes a ready-to-use Netlify configuration.
-
-1. Push to a GitHub repository.
-2. Connect the repo in the [Netlify dashboard](https://app.netlify.com).
-3. Netlify will automatically use the settings in `netlify.toml`:
-   - **Build command:** `npx tsc --outDir dist`
-   - **Publish directory:** `public/`
-   - **Functions directory:** `dist/netlify/functions`
-4. API routes (`/v1/*`, `/healthz`) are redirected to the serverless function automatically.
-
----
-
-## Development
-
-### Project structure
-
-```
-src/drugrunnerman/
-├── cli/            # Interactive CLI player (Inquirer)
-├── data/           # drugs.json, locations.json
-├── engine/         # Game logic, police AI, price generator
-├── models/         # TypeScript interfaces (Drug, Location)
-└── server/         # Express REST API
-netlify/functions/  # Serverless HTTP wrapper
-public/             # Static web UI (index.html)
-```
-
-### Scripts
-
-| Script | Command | Description |
-|--------|---------|-------------|
-| Build | `yarn build` | Compile TypeScript to `dist/` |
-| Play | `yarn play` | Run CLI game |
-| API server | `yarn api` | Run Express server on port 3000 |
-| Test | `yarn test` | Run Jest test suite |
-| Lint | `yarn lint` | ESLint |
-| Format | `yarn format` | Prettier |
-
-### Testing
-
-Tests live alongside source files as `*.test.ts`:
-
-- `engine/game.test.ts` — game logic unit tests
-- `engine/priceGenerator.test.ts` — price algorithm tests
-- `server/api.test.ts` — REST API integration tests (supertest)
-
----
-
-## Known Limitations
-
-> These are known beta-phase issues that will be addressed before v1.0.
-
-- **In-memory sessions** — API game state is not persisted; a server restart resets all games.
-- **No authentication** — The API has no access control; any client sharing a `Session-ID` can control a game.
-- **Single-player only** — No multiplayer or leaderboard support yet.
-- **No save/load** — Games cannot be saved and resumed across sessions.
-- **Seeded RNG replay not exposed via API** — The seed is generated internally and not surfaced to clients.
 
 ---
 

@@ -16,10 +16,7 @@ function getHandler(): Promise<ReturnType<typeof serverless>> {
 	return initPromise;
 }
 
-export const handler = async (
-	event: APIGatewayProxyEvent,
-	context: Context,
-): Promise<APIGatewayProxyResult> => {
+export const handler = async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
 	const fn = await getHandler();
 	return fn(event, context) as Promise<APIGatewayProxyResult>;
 };
