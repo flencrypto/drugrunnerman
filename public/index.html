@@ -1576,6 +1576,96 @@
 		.dd-runner-ring { position: absolute; border-radius: 50%; border: 1px solid; }
 		.dd-ring-a { inset: 12px; border-color: rgba(43,242,110,0.4); }
 		.dd-ring-b { inset: 28px; border-color: rgba(43,242,110,0.3); }
+
+		/* Setup screen */
+		.setup-screen {
+			display: none;
+			min-height: 100dvh;
+			align-items: center;
+			justify-content: center;
+			padding: 20px;
+		}
+		.setup-card {
+			position: relative;
+			overflow: hidden;
+			width: 100%;
+			max-width: 460px;
+			border: 1px solid rgba(34, 211, 238, 0.2);
+			border-radius: 24px;
+			background: #091523;
+			padding: 20px;
+			box-shadow: 0 20px 80px rgba(0, 0, 0, 0.45);
+		}
+		.setup-card::before {
+			content: '';
+			position: absolute;
+			inset: 0;
+			background: radial-gradient(circle at top, rgba(34, 211, 238, 0.14), transparent 45%);
+			pointer-events: none;
+		}
+		.setup-card > * {
+			position: relative;
+			z-index: 1;
+		}
+		.setup-eyebrow {
+			font-size: 0.62rem;
+			text-transform: uppercase;
+			letter-spacing: 0.3em;
+			color: rgba(34, 211, 238, 0.85);
+		}
+		.setup-title {
+			margin-top: 6px;
+			font-size: 1.35rem;
+			color: #fff;
+			font-weight: 900;
+			font-style: italic;
+			letter-spacing: 0.01em;
+		}
+		.setup-form {
+			margin-top: 14px;
+			display: grid;
+			gap: 10px;
+		}
+		.setup-label {
+			display: grid;
+			gap: 4px;
+		}
+		.setup-label span {
+			font-size: 0.72rem;
+			color: #c7d2fe;
+		}
+		.setup-select {
+			padding: 8px;
+			background: rgba(3, 10, 18, 0.8);
+			color: #e2e8f0;
+			border: 1px solid rgba(34, 211, 238, 0.28);
+			border-radius: 10px;
+		}
+		.setup-select:focus {
+			outline: none;
+			border-color: rgba(43, 242, 110, 0.75);
+			box-shadow: 0 0 0 2px rgba(43, 242, 110, 0.2);
+		}
+		.setup-summary {
+			margin-top: 4px;
+			font-size: 0.72rem;
+			color: #93c5fd;
+		}
+		.setup-start-btn {
+			margin-top: 4px;
+			padding: 10px;
+			border: 1px solid rgba(43, 242, 110, 0.5);
+			border-radius: 10px;
+			background: linear-gradient(180deg, #14532d, #0f3f2a);
+			color: #ecfdf5;
+			font-weight: 800;
+			letter-spacing: 0.1em;
+			cursor: pointer;
+			box-shadow: 0 0 14px rgba(43, 242, 110, 0.3);
+		}
+		.setup-start-btn:hover {
+			filter: brightness(1.08);
+		}
 		.dd-ring-c { inset: 44px; border-color: rgba(43,242,110,0.2); }
 		.dd-runner-streak {
 			position: absolute;
@@ -1797,23 +1887,23 @@
 			<div id="loading-sm"></div>
 			<div class="loading-text">Loading DrugRunnerMan…</div>
 		</div>
-		<div id="setup-screen" style="display:none;min-height:100dvh;align-items:center;justify-content:center;padding:20px">
-			<div style="width:100%;max-width:460px;border:1px solid #2a2a4a;border-radius:14px;background:#101827;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,0.35)">
-				<div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.2em;color:#94a3b8">Game Setup</div>
-				<h2 style="margin-top:6px;font-size:1.2rem;color:#fff">DrugRunnerMan — Options</h2>
-				<div style="margin-top:14px;display:grid;gap:10px">
-					<label style="display:grid;gap:4px">
-						<span style="font-size:0.72rem;color:#cbd5e1">Game Length</span>
-						<select id="setup-game-length" style="padding:8px;background:#0b1220;color:#e2e8f0;border:1px solid #334155;border-radius:8px">
+		<div id="setup-screen" class="setup-screen">
+			<div class="setup-card">
+				<div class="setup-eyebrow">Game Setup</div>
+				<h2 class="setup-title">DrugRunnerMan — Options</h2>
+				<div class="setup-form">
+					<label class="setup-label">
+						<span>Game Length</span>
+						<select id="setup-game-length" class="setup-select">
 							<option value="7d">7 Days</option>
 							<option value="30d" selected>30 Days</option>
 							<option value="12m">12 Months</option>
 							<option value="forever">Forever</option>
 						</select>
 					</label>
-					<label style="display:grid;gap:4px">
-						<span style="font-size:0.72rem;color:#cbd5e1">Difficulty</span>
-						<select id="setup-difficulty" style="padding:8px;background:#0b1220;color:#e2e8f0;border:1px solid #334155;border-radius:8px">
+					<label class="setup-label">
+						<span>Difficulty</span>
+						<select id="setup-difficulty" class="setup-select">
 							<option value="easy-peasy">Easy Peasy</option>
 							<option value="easy">Easy</option>
 							<option value="normal" selected>Normal</option>
@@ -1821,25 +1911,25 @@
 							<option value="nightmare">Nightmare</option>
 						</select>
 					</label>
-					<label style="display:grid;gap:4px">
-						<span style="font-size:0.72rem;color:#cbd5e1">World Event Satire</span>
-						<select id="setup-world-events" style="padding:8px;background:#0b1220;color:#e2e8f0;border:1px solid #334155;border-radius:8px">
+					<label class="setup-label">
+						<span>World Event Satire</span>
+						<select id="setup-world-events" class="setup-select">
 							<option value="off">Off</option>
 							<option value="light">Light</option>
 							<option value="standard" selected>Standard</option>
 							<option value="chaos">Chaos Mode</option>
 						</select>
 					</label>
-					<label style="display:grid;gap:4px">
-						<span style="font-size:0.72rem;color:#cbd5e1">Personal Life Mode</span>
-						<select id="setup-personal-life" style="padding:8px;background:#0b1220;color:#e2e8f0;border:1px solid #334155;border-radius:8px">
+					<label class="setup-label">
+						<span>Personal Life Mode</span>
+						<select id="setup-personal-life" class="setup-select">
 							<option value="off">Off</option>
 							<option value="light" selected>Light</option>
 							<option value="full">Full</option>
 						</select>
 					</label>
-					<div id="setup-summary" style="margin-top:4px;font-size:0.72rem;color:#94a3b8">Recommended: 30 Days · Normal · Standard · Light</div>
-					<button id="setup-start-btn" style="margin-top:4px;padding:10px;border:none;border-radius:8px;background:#0891b2;color:white;font-weight:800;letter-spacing:0.08em;cursor:pointer">START RUN</button>
+					<div id="setup-summary" class="setup-summary">Recommended: 30 Days · Normal · Standard · Light</div>
+					<button id="setup-start-btn" class="setup-start-btn">START RUN</button>
 				</div>
 			</div>
 		</div>
