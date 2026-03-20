@@ -1283,6 +1283,114 @@
 			letter-spacing: 0.15em;
 			color: #a1a1aa;
 		}
+		/* Quick Access challenge card */
+		.qa-phone-shell {
+			border-radius: 20px;
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			background: #05070b;
+			padding: 12px;
+			box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+		}
+		.qa-phone-notch {
+			margin: 0 auto 10px;
+			height: 6px;
+			width: 60px;
+			border-radius: 99px;
+			background: rgba(255, 255, 255, 0.1);
+		}
+		.qa-phone-body {
+			border-radius: 16px;
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			background: #0b1220;
+			padding: 10px;
+		}
+		.qa-stat-grid {
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			gap: 8px;
+			margin-top: 10px;
+		}
+		.qa-stat-card {
+			border-radius: 12px;
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			background: rgba(0, 0, 0, 0.3);
+			padding: 10px;
+		}
+		.qa-stat-label {
+			font-size: 0.55rem;
+			text-transform: uppercase;
+			letter-spacing: 0.16em;
+			color: #71717a;
+		}
+		.qa-stat-value {
+			margin-top: 4px;
+			font-size: 0.85rem;
+			font-weight: 900;
+		}
+		.qa-target-zone {
+			position: relative;
+			margin-top: 10px;
+			height: 320px;
+			border-radius: 16px;
+			border: 1px solid rgba(34, 211, 238, 0.22);
+			background:
+				radial-gradient(circle at 20% 20%, rgba(34, 211, 238, 0.12), transparent 42%),
+				radial-gradient(circle at 75% 75%, rgba(163, 230, 53, 0.12), transparent 45%),
+				#06101a;
+			cursor: crosshair;
+			overflow: hidden;
+		}
+		.qa-target-zone.flash {
+			box-shadow: inset 0 0 0 2px rgba(253, 186, 116, 0.65);
+		}
+		.qa-target {
+			position: absolute;
+			width: 122px;
+			height: 214px;
+			border: 1px dashed rgba(255, 255, 255, 0.35);
+			border-radius: 12px;
+			background: rgba(255, 255, 255, 0.04);
+		}
+		.qa-target-head {
+			position: absolute;
+			left: 27px;
+			top: 6px;
+			width: 42px;
+			height: 42px;
+			border-radius: 50%;
+			border: 1px solid rgba(248, 113, 113, 0.65);
+			background: rgba(248, 113, 113, 0.1);
+		}
+		.qa-messages {
+			max-height: 220px;
+			overflow-y: auto;
+			padding-right: 3px;
+			display: grid;
+			gap: 8px;
+		}
+		.qa-msg {
+			max-width: 88%;
+			border-radius: 14px;
+			padding: 8px 10px;
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			background: rgba(255, 255, 255, 0.05);
+			color: #e4e4e7;
+			font-size: 0.8rem;
+			line-height: 1.4;
+		}
+		.qa-msg.dispatch {
+			border-color: rgba(34, 211, 238, 0.2);
+			background: rgba(34, 211, 238, 0.1);
+			color: #cffafe;
+		}
+		.qa-msg-from {
+			margin-bottom: 4px;
+			font-size: 0.55rem;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: 0.15em;
+			color: #a1a1aa;
+		}
 		/* Live event card */
 		.mob-event-card {
 			border-radius: 16px;
@@ -1689,6 +1797,52 @@
 			<div id="loading-sm"></div>
 			<div class="loading-text">Loading DrugRunnerMan…</div>
 		</div>
+		<div id="setup-screen" style="display:none;min-height:100dvh;align-items:center;justify-content:center;padding:20px">
+			<div style="width:100%;max-width:460px;border:1px solid #2a2a4a;border-radius:14px;background:#101827;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,0.35)">
+				<div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.2em;color:#94a3b8">Game Setup</div>
+				<h2 style="margin-top:6px;font-size:1.2rem;color:#fff">DrugRunnerMan — Options</h2>
+				<div style="margin-top:14px;display:grid;gap:10px">
+					<label style="display:grid;gap:4px">
+						<span style="font-size:0.72rem;color:#cbd5e1">Game Length</span>
+						<select id="setup-game-length" style="padding:8px;background:#0b1220;color:#e2e8f0;border:1px solid #334155;border-radius:8px">
+							<option value="7d">7 Days</option>
+							<option value="30d" selected>30 Days</option>
+							<option value="12m">12 Months</option>
+							<option value="forever">Forever</option>
+						</select>
+					</label>
+					<label style="display:grid;gap:4px">
+						<span style="font-size:0.72rem;color:#cbd5e1">Difficulty</span>
+						<select id="setup-difficulty" style="padding:8px;background:#0b1220;color:#e2e8f0;border:1px solid #334155;border-radius:8px">
+							<option value="easy-peasy">Easy Peasy</option>
+							<option value="easy">Easy</option>
+							<option value="normal" selected>Normal</option>
+							<option value="hard">Hard</option>
+							<option value="nightmare">Nightmare</option>
+						</select>
+					</label>
+					<label style="display:grid;gap:4px">
+						<span style="font-size:0.72rem;color:#cbd5e1">World Event Satire</span>
+						<select id="setup-world-events" style="padding:8px;background:#0b1220;color:#e2e8f0;border:1px solid #334155;border-radius:8px">
+							<option value="off">Off</option>
+							<option value="light">Light</option>
+							<option value="standard" selected>Standard</option>
+							<option value="chaos">Chaos Mode</option>
+						</select>
+					</label>
+					<label style="display:grid;gap:4px">
+						<span style="font-size:0.72rem;color:#cbd5e1">Personal Life Mode</span>
+						<select id="setup-personal-life" style="padding:8px;background:#0b1220;color:#e2e8f0;border:1px solid #334155;border-radius:8px">
+							<option value="off">Off</option>
+							<option value="light" selected>Light</option>
+							<option value="full">Full</option>
+						</select>
+					</label>
+					<div id="setup-summary" style="margin-top:4px;font-size:0.72rem;color:#94a3b8">Recommended: 30 Days · Normal · Standard · Light</div>
+					<button id="setup-start-btn" style="margin-top:4px;padding:10px;border:none;border-radius:8px;background:#0891b2;color:white;font-weight:800;letter-spacing:0.08em;cursor:pointer">START RUN</button>
+				</div>
+			</div>
+		</div>
 
 		<!-- ════════════ GAME ════════════ -->
 		<div id="game" style="display: none">
@@ -1855,10 +2009,56 @@
 						</section>
 						<section class="mob-sec">
 							<div class="mob-sec-hdr">
-								<div class="mob-sec-title">Gear</div>
-								<div class="mob-sec-sub">Quick Access</div>
+								<div class="mob-sec-title">Quick Access</div>
+								<div class="mob-sec-sub">Phone challenge board</div>
 							</div>
-							<div class="mob-gear-grid" id="mob-gear-grid"></div>
+							<div class="qa-phone-shell">
+								<div class="qa-phone-notch"></div>
+								<div class="qa-phone-body">
+									<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px">
+										<div>
+											<div style="font-size:0.8rem;font-weight:900;color:#fff">DISPATCH</div>
+											<div class="mob-sec-sub" id="qa-phone-sub">Standby</div>
+										</div>
+										<div style="display:flex;align-items:center;gap:8px">
+											<div id="qa-unread" class="mob-sec-sub">No new alerts</div>
+											<button class="mob-btn-buy" id="qa-phone-toggle" style="padding:8px 10px;font-size:0.62rem">Open</button>
+										</div>
+									</div>
+									<div id="qa-active-wrap"></div>
+									<div id="qa-messages" class="qa-messages" style="display:none"></div>
+								</div>
+							</div>
+							<div class="qa-stat-grid">
+								<div class="qa-stat-card">
+									<div class="qa-stat-label">Cash</div>
+									<div class="qa-stat-value" style="color:#bef264" id="qa-cash">$0</div>
+								</div>
+								<div class="qa-stat-card">
+									<div class="qa-stat-label">Score</div>
+									<div class="qa-stat-value" style="color:#67e8f9" id="qa-score">0</div>
+								</div>
+								<div class="qa-stat-card">
+									<div class="qa-stat-label">Combo</div>
+									<div class="qa-stat-value" style="color:#fdba74" id="qa-combo">0</div>
+								</div>
+								<div class="qa-stat-card">
+									<div class="qa-stat-label">Mode</div>
+									<div class="qa-stat-value" id="qa-mode">IDLE</div>
+								</div>
+							</div>
+							<div class="qa-target-zone" id="qa-target-zone">
+								<div class="qa-target" style="left:118px;top:92px">
+									<div class="qa-target-head"></div>
+								</div>
+							</div>
+							<p id="qa-event-text" style="margin-top:8px;font-size:0.78rem;color:#d4d4d8">Phone online. Waiting for challenge...</p>
+							<div style="margin-top:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.25);border-radius:12px;padding:10px">
+								<div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:0.16em;color:#71717a">Run Summary</div>
+								<p class="mob-event-body" style="margin-top:6px">
+									Cash rewards are only paid when a live phone challenge activates Hit Mode. Headshots earn an extra payout, so waiting for the right message matters.
+								</p>
+							</div>
 						</section>
 						<section class="mob-sec" id="mob-event-sec" style="display:none">
 							<div class="mob-sec-title">Live Event</div>
@@ -2048,6 +2248,36 @@
 			let prices = null;
 			let shopItems = [];
 			let recentEvents = [];
+			let qaCash = 0;
+			let qaScore = 0;
+			let qaCombo = 0;
+			let qaBestCombo = 0;
+			let qaHits = 0;
+			let qaHeat = 0;
+			let qaPhoneOpen = false;
+			let qaMessages = [
+				{ id: 'boot-msg', from: 'SYSTEM', text: 'Phone online. Waiting for challenge...', unread: false },
+			];
+			let qaActiveChallenge = null;
+			let qaHitModeActive = false;
+			let qaChallengeEndsAt = null;
+			const QA_NEXT_CHALLENGE_BASE_MS = 6000;
+			const QA_NEXT_CHALLENGE_JITTER_MS = 12000;
+			const QA_CHALLENGE_BOOST_BY_CADENCE = {
+				off: 1.8,
+				light: 1.35,
+				standard: 1,
+				chaos: 0.6,
+			};
+			let qaNextChallengeInMs = QA_NEXT_CHALLENGE_BASE_MS + Math.floor(Math.random() * QA_NEXT_CHALLENGE_JITTER_MS);
+			let qaChallengeTimer = null;
+			let qaChallengeExpiryTimer = null;
+			let setupConfig = {
+				gameLength: '30d',
+				difficulty: 'normal',
+				worldEventCadence: 'standard',
+				personalLifeMode: 'light',
+			};
 
 			async function api(method, path, body) {
 				const res = await fetch(path, {
@@ -2062,6 +2292,11 @@
 
 			async function loadState() {
 				const d = await api('GET', '/v1/state');
+				state = d.state;
+				prices = d.prices;
+			}
+			async function configureGame() {
+				const d = await api('POST', '/v1/game/setup', setupConfig);
 				state = d.state;
 				prices = d.prices;
 			}
@@ -2111,11 +2346,233 @@
 				Amsterdam: 'MDMA',
 				Seattle: 'Fentanyl',
 			};
+			const CHALLENGES = [
+				{
+					id: 'quick-pop',
+					title: 'QUICK POP',
+					body: 'Runner spotted. Clean hit needed. Go now.',
+					reward: 180,
+					headshotBonus: 320,
+					durationMs: 18000,
+				},
+				{
+					id: 'street-order',
+					title: 'STREET ORDER',
+					body: 'A rival courier is moving product. Intercept.',
+					reward: 220,
+					headshotBonus: 380,
+					durationMs: 20000,
+				},
+				{
+					id: 'late-night-job',
+					title: 'LATE NIGHT JOB',
+					body: 'Challenge live. Hit mode enabled for this round.',
+					reward: 250,
+					headshotBonus: 450,
+					durationMs: 22000,
+				},
+			];
+			const randomFrom = (items) => items[Math.floor(Math.random() * items.length)];
 
 			/* ─────────────────────────────────────────
      FORMATTERS
   ───────────────────────────────────────── */
 			const fmt$ = (n) => '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+			function qaEventText(text) {
+				const el = document.getElementById('qa-event-text');
+				if (el) el.textContent = text;
+			}
+			function pushPhoneMessage(from, text, unread = true) {
+				qaMessages.push({
+					id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+					from,
+					text,
+					unread,
+				});
+			}
+			function renderQuickAccess() {
+				const unreadCount = qaMessages.filter((m) => m.unread).length;
+				const phoneSub = document.getElementById('qa-phone-sub');
+				const unreadEl = document.getElementById('qa-unread');
+				const toggleEl = document.getElementById('qa-phone-toggle');
+				const msgsEl = document.getElementById('qa-messages');
+				const activeWrap = document.getElementById('qa-active-wrap');
+				const modeEl = document.getElementById('qa-mode');
+				const zoneEl = document.getElementById('qa-target-zone');
+
+				if (phoneSub) phoneSub.textContent = qaHitModeActive && qaActiveChallenge ? 'Challenge live' : 'Standby';
+				if (unreadEl) unreadEl.textContent = unreadCount > 0 ? `${unreadCount} new` : 'No new alerts';
+				if (toggleEl) toggleEl.textContent = qaPhoneOpen ? 'Hide' : 'Open';
+				if (msgsEl) {
+					msgsEl.style.display = qaPhoneOpen ? '' : 'none';
+					msgsEl.innerHTML = qaMessages
+						.slice(-6)
+						.reverse()
+						.map(
+							(msg) => `<div class="qa-msg ${msg.from === 'DISPATCH' ? 'dispatch' : ''}">
+								<div class="qa-msg-from">${msg.from}</div>
+								<div>${msg.text}</div>
+							</div>`,
+						)
+						.join('');
+				}
+				if (activeWrap) {
+					activeWrap.innerHTML = qaActiveChallenge
+						? `<div style="margin-bottom:10px;border-radius:14px;border:1px solid rgba(249,115,22,0.3);background:rgba(249,115,22,0.1);padding:10px">
+								<div style="font-size:0.58rem;text-transform:uppercase;letter-spacing:0.16em;color:#fdba74">Active Challenge</div>
+								<div style="margin-top:4px;font-size:0.85rem;font-weight:900;color:#fff">${qaActiveChallenge.title}</div>
+								<div style="margin-top:4px;font-size:0.72rem;color:#d4d4d8">${qaActiveChallenge.body}</div>
+								<div style="margin-top:6px;font-size:0.7rem;color:#a1a1aa">Base Reward: $${qaActiveChallenge.reward} · Headshot Bonus: $${qaActiveChallenge.headshotBonus}</div>
+							</div>`
+						: '';
+				}
+				if (modeEl) {
+					modeEl.textContent = qaHitModeActive ? 'LIVE' : 'IDLE';
+					modeEl.style.color = qaHitModeActive ? '#bef264' : '#d4d4d8';
+				}
+				if (zoneEl) zoneEl.classList.toggle('flash', false);
+				document.getElementById('qa-cash').textContent = `$${qaCash}`;
+				document.getElementById('qa-score').textContent = qaScore;
+				document.getElementById('qa-combo').textContent = qaCombo;
+			}
+			function scheduleChallengeSpawn() {
+				if (qaChallengeTimer) clearTimeout(qaChallengeTimer);
+				if (qaHitModeActive) return;
+				const challengeBoost = QA_CHALLENGE_BOOST_BY_CADENCE[setupConfig.worldEventCadence] ?? 1;
+				qaChallengeTimer = setTimeout(() => {
+					const challenge = randomFrom(CHALLENGES);
+					qaActiveChallenge = challenge;
+					qaHitModeActive = true;
+					qaChallengeEndsAt = Date.now() + challenge.durationMs;
+					pushPhoneMessage('DISPATCH', `${challenge.title}: ${challenge.body}`);
+					qaEventText(`Incoming challenge: ${challenge.title}`);
+					qaPhoneOpen = true;
+					qaNextChallengeInMs = 10000 + Math.floor(Math.random() * 18000);
+					startChallengeExpiryWatcher();
+					renderQuickAccess();
+				}, Math.floor(qaNextChallengeInMs * challengeBoost));
+			}
+			function startChallengeExpiryWatcher() {
+				if (qaChallengeExpiryTimer) clearInterval(qaChallengeExpiryTimer);
+				if (!qaHitModeActive || !qaChallengeEndsAt) return;
+				qaChallengeExpiryTimer = setInterval(() => {
+					if (Date.now() >= qaChallengeEndsAt) {
+						pushPhoneMessage('DISPATCH', 'Challenge expired. Reward window closed.', true);
+						qaHitModeActive = false;
+						qaActiveChallenge = null;
+						qaChallengeEndsAt = null;
+						qaEventText('Challenge expired.');
+						clearInterval(qaChallengeExpiryTimer);
+						qaChallengeExpiryTimer = null;
+						renderQuickAccess();
+						scheduleChallengeSpawn();
+					}
+				}, 250);
+			}
+			function handleQuickAccessClick(ev) {
+				const zone = document.getElementById('qa-target-zone');
+				if (!zone) return;
+				const rect = zone.getBoundingClientRect();
+				const x = ev.clientX - rect.left;
+				const y = ev.clientY - rect.top;
+
+				const bodyBox = { x: 118, y: 92, w: 122, h: 214 };
+				const headBox = { x: 145, y: 98, w: 42, h: 42 };
+				const isBodyHit = x >= bodyBox.x && x <= bodyBox.x + bodyBox.w && y >= bodyBox.y && y <= bodyBox.y + bodyBox.h;
+				const isHeadshot =
+					x >= headBox.x && x <= headBox.x + headBox.w && y >= headBox.y && y <= headBox.y + headBox.h;
+
+				if (!isBodyHit) {
+					qaCombo = 0;
+					qaHeat = Math.min(99, qaHeat + 3);
+					qaEventText('Missed shot. Heat rising.');
+					renderQuickAccess();
+					return;
+				}
+
+				zone.classList.add('flash');
+				setTimeout(() => zone.classList.remove('flash'), 80);
+
+				qaHits += 1;
+				qaCombo += 1;
+				qaBestCombo = Math.max(qaBestCombo, qaCombo);
+				qaScore += isHeadshot ? 220 : 120;
+
+				if (qaHitModeActive && qaActiveChallenge) {
+					const payout = isHeadshot
+						? qaActiveChallenge.reward + qaActiveChallenge.headshotBonus
+						: qaActiveChallenge.reward;
+					qaCash += payout;
+					qaEventText(isHeadshot ? `Headshot bonus secured: +$${payout}` : `Challenge hit landed: +$${payout}`);
+					pushPhoneMessage(
+						'DISPATCH',
+						isHeadshot
+							? `Confirmed headshot. Bonus paid: $${payout}.`
+							: `Hit confirmed. Reward paid: $${payout}.`,
+						true,
+					);
+					qaHitModeActive = false;
+					qaActiveChallenge = null;
+					qaChallengeEndsAt = null;
+					if (qaChallengeExpiryTimer) {
+						clearInterval(qaChallengeExpiryTimer);
+						qaChallengeExpiryTimer = null;
+					}
+					scheduleChallengeSpawn();
+				} else {
+					qaEventText(
+						isHeadshot
+							? 'Headshot landed. No active challenge, no cash payout.'
+							: 'Hit landed. No active challenge, no cash payout.',
+					);
+				}
+				renderQuickAccess();
+			}
+			function togglePhone() {
+				qaPhoneOpen = !qaPhoneOpen;
+				if (qaPhoneOpen) qaMessages = qaMessages.map((m) => ({ ...m, unread: false }));
+				renderQuickAccess();
+			}
+			function initSetupScreen() {
+				const setupScreen = document.getElementById('setup-screen');
+				const loading = document.getElementById('loading');
+				const game = document.getElementById('game');
+				const start = document.getElementById('setup-start-btn');
+				const summary = document.getElementById('setup-summary');
+				const gl = document.getElementById('setup-game-length');
+				const diff = document.getElementById('setup-difficulty');
+				const we = document.getElementById('setup-world-events');
+				const life = document.getElementById('setup-personal-life');
+
+				const refreshSummary = () => {
+					setupConfig = {
+						gameLength: gl.value,
+						difficulty: diff.value,
+						worldEventCadence: we.value,
+						personalLifeMode: life.value,
+					};
+					summary.textContent = `Selected: ${gl.options[gl.selectedIndex].text} · ${diff.options[diff.selectedIndex].text} · ${we.options[we.selectedIndex].text} · ${life.options[life.selectedIndex].text}`;
+				};
+
+				[gl, diff, we, life].forEach((el) => el.addEventListener('change', refreshSummary));
+				refreshSummary();
+
+				start.addEventListener('click', async () => {
+					setupScreen.style.display = 'none';
+					loading.style.display = 'flex';
+					try {
+						await configureGame();
+						loading.style.display = 'none';
+						game.style.display = 'block';
+						renderAll();
+						scheduleChallengeSpawn();
+					} catch (e) {
+						loading.style.display = 'none';
+						setupScreen.style.display = 'flex';
+						toast(e.message || 'Setup failed', 'err');
+					}
+				});
+			}
 
 			/* ─────────────────────────────────────────
      RENDER
@@ -2265,6 +2722,7 @@
 				renderShop();
 				renderGear();
 				renderDashboardEvents();
+				renderQuickAccess();
 			}
 
 			/* ─────────────────────────────────────────
@@ -2640,12 +3098,14 @@
 				document.getElementById('police-ok').addEventListener('click', closePolice);
 				document.getElementById('go-new-btn').addEventListener('click', () => location.reload());
 				document.getElementById('event-ok').addEventListener('click', closeMarketEvent);
+				document.getElementById('qa-target-zone').addEventListener('click', handleQuickAccessClick);
+				document.getElementById('qa-phone-toggle').addEventListener('click', togglePhone);
+				initSetupScreen();
+				document.getElementById('loading').style.display = 'none';
+				document.getElementById('setup-screen').style.display = 'flex';
 
 				try {
-					await Promise.all([loadState(), loadShop()]);
-					document.getElementById('loading').style.display = 'none';
-					document.getElementById('game').style.display = 'block';
-					renderAll();
+					await loadShop();
 				} catch (e) {
 					document.querySelector('.loading-text').innerHTML =
 						'Could not connect to server.<br>Make sure the API is running.';
