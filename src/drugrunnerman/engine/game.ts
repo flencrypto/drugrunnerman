@@ -662,23 +662,37 @@ export class Game {
 
 	private seasonalMultipliers(): Partial<Record<Drug['code'], number>> {
 		const month = this.currentMonthName();
-		if (['June', 'July', 'August'].includes(month)) {
-			return { MDM: 1.2, CAN: 1.12 };
+		switch (month) {
+			case 'January':
+				return { HER: 1.08, METH: 1.05 };
+			case 'February':
+				return { COC: 1.04 };
+			case 'March':
+				return { CAN: 1.05 };
+			case 'April':
+				return { MDM: 1.08, CAN: 1.04 };
+			case 'May':
+				return { MDM: 1.12, CAN: 1.08 };
+			case 'June':
+				return { MDM: 1.22, CAN: 1.12 };
+			case 'July':
+				return { MDM: 1.28, CAN: 1.15, COC: 1.05 };
+			case 'August':
+				return { MDM: 1.25, CAN: 1.12 };
+			case 'September':
+				return { METH: 1.04, COC: 1.03 };
+			case 'October':
+				return { HER: 1.08, METH: 1.06 };
+			case 'November':
+				return { HER: 1.12, FEN: 1.08 };
+			case 'December':
+				return { COC: 1.1, MDM: 1.14, HER: 1.1, FEN: 1.07 };
+			default:
+				return {};
 		}
-		if (['December', 'January', 'February'].includes(month)) {
-			return { HER: 1.15, METH: 1.1 };
-		}
-		if (month === 'November') {
-			return { CAN: 1.05, COC: 1.06, HER: 1.06, METH: 1.06, MDM: 1.07, FEN: 1.05 };
-		}
-		return {};
 	}
 
 	private cityMultipliers(loc: string): Partial<Record<Drug['code'], number>> {
-		if (loc === 'Amsterdam') return { MDM: 1.15, COC: 1.1 };
-		if (loc === 'Seattle') return { FEN: 1.15, COC: 1.08 };
-		if (loc === 'Kabul') return { HER: 1.18 };
-		if (loc === 'Medellin') return { COC: 0.92 };
 		return {};
 	}
 

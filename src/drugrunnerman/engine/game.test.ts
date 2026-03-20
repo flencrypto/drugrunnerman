@@ -69,6 +69,60 @@ describe('Game engine', () => {
 		expect(game.day).toBe(2);
 	});
 
+	it('applies city multipliers from location data', () => {
+		const cityDrugs: Record<string, Drug> = {
+			CAN: { code: 'CAN', name: 'Cannabis', mu: 100, sigma: 0, unit: 'g' },
+			METH: { code: 'METH', name: 'Meth', mu: 100, sigma: 0, unit: 'g' },
+			COC: { code: 'COC', name: 'Cocaine', mu: 100, sigma: 0, unit: 'g' },
+			HER: { code: 'HER', name: 'Heroin', mu: 100, sigma: 0, unit: 'g' },
+			MDM: { code: 'MDM', name: 'MDMA', mu: 100, sigma: 0, unit: 'tablet' },
+			FEN: { code: 'FEN', name: 'Fentanyl', mu: 100, sigma: 0, unit: 'pill' },
+		};
+		const cityLocations: Record<string, Location> = {
+			Denver: { adjust: { CAN: 1.15, METH: 0.95 } },
+			Medellin: { adjust: { COC: 0.85, HER: 1.05 } },
+		};
+		const game = new Game(cityDrugs, cityLocations, () => 0.9);
+
+		const denver = game.prices('Denver');
+		const medellin = game.prices('Medellin');
+
+		expect(denver.CAN).toBe(115);
+		expect(denver.METH).toBe(99.75);
+		expect(denver.COC).toBe(100);
+		expect(medellin.COC).toBe(85);
+		expect(medellin.HER).toBe(113.4);
+		expect(medellin.CAN).toBe(100);
+	});
+
+	it('applies month-specific seasonal multipliers', () => {
+		const seasonalDrugs: Record<string, Drug> = {
+			CAN: { code: 'CAN', name: 'Cannabis', mu: 100, sigma: 0, unit: 'g' },
+			COC: { code: 'COC', name: 'Cocaine', mu: 100, sigma: 0, unit: 'g' },
+			HER: { code: 'HER', name: 'Heroin', mu: 100, sigma: 0, unit: 'g' },
+			METH: { code: 'METH', name: 'Meth', mu: 100, sigma: 0, unit: 'g' },
+			MDM: { code: 'MDM', name: 'MDMA', mu: 100, sigma: 0, unit: 'tablet' },
+			FEN: { code: 'FEN', name: 'Fentanyl', mu: 100, sigma: 0, unit: 'pill' },
+		};
+		const game = new Game(seasonalDrugs, { Denver: { adjust: {} } }, () => 0.9, { maxDays: 400 });
+
+		for (let i = 1; i < 181; i++) {
+			game.advanceDay();
+		}
+		const july = game.prices('Denver');
+		expect(july.MDM).toBe(128);
+		expect(july.CAN).toBe(115);
+		expect(july.COC).toBe(105);
+
+		for (let i = 1; i < 121; i++) {
+			game.advanceDay();
+		}
+		const november = game.prices('Denver');
+		expect(november.HER).toBe(112);
+		expect(november.FEN).toBe(108);
+		expect(november.CAN).toBe(100);
+	});
+
 	describe('GameConfig validation', () => {
 		it('throws for negative startingCash', () => {
 			expect(() => new Game(drugs, locations, rng, { startingCash: -1 })).toThrow(GameRuleError);

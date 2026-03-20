@@ -1,8 +1,8 @@
 {
-	"Denver": { "adjust": { "CAN": 1.0 } },
-	"Medellin": { "adjust": { "COC": 0.8 } },
-	"Kabul": { "adjust": { "HER": 0.7 } },
-	"Culiacan": { "adjust": { "METH": 0.85, "FEN": 0.9 } },
-	"Amsterdam": { "adjust": { "MDM": 0.95 } },
-	"Seattle": { "adjust": { "FEN": 1.0 } }
+	"Denver": { "adjust": { "CAN": 1.15, "METH": 0.95 } },
+	"Medellin": { "adjust": { "COC": 0.85, "HER": 1.05 } },
+	"Kabul": { "adjust": { "HER": 0.82, "METH": 1.08 } },
+	"Culiacan": { "adjust": { "METH": 0.88, "FEN": 0.9, "COC": 0.92 } },
+	"Amsterdam": { "adjust": { "MDM": 0.8, "CAN": 0.9, "COC": 1.08 } },
+	"Seattle": { "adjust": { "METH": 1.1, "FEN": 1.05, "MDM": 1.08 } }
 }
