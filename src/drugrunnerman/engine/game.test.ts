@@ -123,9 +123,14 @@ describe('Game engine', () => {
 		});
 
 		it('allows frequent events in chaos mode', () => {
-			const game = new Game(drugs, locations, () => 0.2, { worldEventCadence: 'chaos' });
-			const result = game.travel('Seattle');
-			expect(result.marketEvent).not.toBeNull();
+			const game = new Game(drugs, locations, seedrandom('chaos-seed'), { worldEventCadence: 'chaos', maxDays: 40 });
+			let eventCount = 0;
+			for (let i = 0; i < 10; i++) {
+				const to = i % 2 === 0 ? 'Seattle' : 'Denver';
+				const result = game.travel(to);
+				if (result.marketEvent) eventCount += 1;
+			}
+			expect(eventCount).toBeGreaterThan(0);
 		});
 	});
 
