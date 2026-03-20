@@ -198,21 +198,18 @@ export class Game {
 		const subRng = this.makeSubRng(`${this.day}:${loc}`);
 		const locAdjust = this.locations[loc].adjust;
 		const seasonalLayer = this.seasonalMultipliers();
-		const cityLayer = this.cityMultipliers(loc);
 		const moodLayer = this.globalMoodMultipliers();
 		const activeEventLayer = this.activeEventPriceMultipliers(loc);
 		const volatility = this.difficultyVolatilityMultiplier();
 		const prices = Object.entries(this.drugs).reduce((acc, [code, drug]) => {
 			const typedCode = code as Drug['code'];
 			const locationMultiplier = locAdjust[typedCode] ?? 1;
+			const seasonalMultiplier = seasonalLayer[typedCode] ?? 1;
+			const moodMultiplier = moodLayer[typedCode] ?? 1;
+			const activeEventMultiplier = activeEventLayer[typedCode] ?? 1;
 			const expectedPrice = drug.mu * locationMultiplier;
 			const base = nextPrice(expectedPrice, drug.sigma * volatility, subRng);
-			const layered =
-				base *
-				(seasonalLayer[typedCode] ?? 1) *
-				(cityLayer[typedCode] ?? 1) *
-				(moodLayer[typedCode] ?? 1) *
-				(activeEventLayer[typedCode] ?? 1);
+			const layered = base * seasonalMultiplier * moodMultiplier * activeEventMultiplier;
 			acc[typedCode] = Math.max(0.01, Number(layered.toFixed(2)));
 			return acc;
 		}, {} as Record<Drug['code'], number>);
@@ -690,10 +687,6 @@ export class Game {
 			default:
 				return {};
 		}
-	}
-
-	private cityMultipliers(loc: string): Partial<Record<Drug['code'], number>> {
-		return {};
 	}
 
 	private globalMoodMultipliers(): Partial<Record<Drug['code'], number>> {

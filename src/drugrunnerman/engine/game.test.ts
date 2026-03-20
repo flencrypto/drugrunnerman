@@ -91,6 +91,7 @@ describe('Game engine', () => {
 		expect(denver.METH).toBe(99.75);
 		expect(denver.COC).toBe(100);
 		expect(medellin.COC).toBe(85);
+		// January seasonal + city adjustment: 100 * 1.05 * 1.08.
 		expect(medellin.HER).toBe(113.4);
 		expect(medellin.CAN).toBe(100);
 	});
