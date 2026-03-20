@@ -154,13 +154,13 @@ The `/v1/travel` response also includes `policeEncounter` and `marketEvent` fiel
 - Node.js v14.5.0 or higher
 - yarn or npm
 
-### Install dependencies
+### 1. Install dependencies
 
 ```bash
 yarn install
 ```
 
-### Play in the terminal (CLI)
+### 2. Play in the terminal
 
 ```bash
 yarn play
@@ -173,7 +173,7 @@ yarn api
 # Open http://localhost:3000
 ```
 
-### Run tests
+### 4. Run tests
 
 ```bash
 yarn test
