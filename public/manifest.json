@@ -1,26 +1,42 @@
 {
+	"id": "/",
 	"name": "DrugRunnerMan",
 	"short_name": "DrugRunner",
 	"description": "A fast-paced street-trading simulation. Buy low, sell high, dodge the cops, and retire rich — in 30 days.",
 	"start_url": "/",
+	"scope": "/",
 	"display": "standalone",
+	"display_override": ["standalone", "minimal-ui", "browser"],
 	"orientation": "portrait-primary",
+	"dir": "ltr",
+	"lang": "en",
 	"background_color": "#0a0a0e",
 	"theme_color": "#0a0a0e",
-	"lang": "en",
 	"categories": ["games", "entertainment"],
 	"icons": [
 		{
 			"src": "/icons/icon-192.png",
 			"sizes": "192x192",
 			"type": "image/png",
-			"purpose": "any maskable"
+			"purpose": "any"
 		},
 		{
 			"src": "/icons/icon-512.png",
 			"sizes": "512x512",
 			"type": "image/png",
-			"purpose": "any maskable"
+			"purpose": "any"
+		},
+		{
+			"src": "/icons/icon-192-maskable.png",
+			"sizes": "192x192",
+			"type": "image/png",
+			"purpose": "maskable"
+		},
+		{
+			"src": "/icons/icon-512-maskable.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "maskable"
 		}
 	],
 	"screenshots": [],
@@ -32,5 +48,8 @@
 			"url": "/?new=1",
 			"icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
 		}
-	]
+	],
+	"launch_handler": {
+		"client_mode": "focus-existing"
+	}
 }
