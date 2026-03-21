@@ -163,6 +163,34 @@ describe('POST /v1/travel', () => {
 		expect(res.body).toHaveProperty('policeEncounter');
 	});
 
+	it('includes informantTip field in travel response (null when no INFORM owned)', async () => {
+		const res = await request(app).post('/v1/travel').send({ to: 'Medellin' });
+		expect(res.status).toBe(200);
+		expect(res.body).toHaveProperty('informantTip');
+		expect(res.body.informantTip).toBeNull();
+	});
+
+	it('returns non-null informantTip when player owns INFORM item', async () => {
+		const sid = 'informant-test-session';
+		// Use setup to get extra starting cash so we can afford the INFORM item ($1000)
+		await request(app)
+			.post('/v1/game/setup')
+			.set('X-Session-ID', sid)
+			.send({ gameLength: '30d', difficulty: 'easy-peasy', worldEventCadence: 'off', personalLifeMode: 'off' });
+		await request(app).post('/v1/shop/buy').set('X-Session-ID', sid).send({ code: 'INFORM' });
+
+		const res = await request(app).post('/v1/travel').set('X-Session-ID', sid).send({ to: 'Medellin' });
+		expect(res.status).toBe(200);
+		expect(res.body.informantTip).not.toBeNull();
+		expect(res.body.informantTip).toHaveProperty('drugCode');
+		expect(res.body.informantTip).toHaveProperty('drugName');
+		expect(res.body.informantTip).toHaveProperty('price');
+		expect(res.body.informantTip).toHaveProperty('message');
+		expect(res.body.informantTip.message).toContain('🕵️');
+		// INFORM is consumed: ownedItems should no longer contain it
+		expect(res.body.state.ownedItems).not.toContain('INFORM');
+	});
+
 	it('returns 422 for unknown destination', async () => {
 		const res = await request(app).post('/v1/travel').send({ to: 'Atlantis' });
 		expect(res.status).toBe(422);

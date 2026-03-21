@@ -70,16 +70,16 @@ Items persist for the lifetime of the session.
 
 Each time you travel there is a **~25% chance** a random street event fires:
 
-| Event            | Effect                                                                                                           |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------- |
-| 🚀 Price Surge   | _Planned:_ a random drug will be at **2× the normal price** — great time to sell                                 |
-| 📉 Market Crash  | _Planned:_ a random drug drops to **0.45× the normal price** — bargain opportunity                              |
-| 📦 Found a Stash | You find **5–15 free units** of a random drug on the street _(implemented)_                                     |
-| 🕵️ Hot Tip       | _Planned:_ informant reveals the best-selling drug in town                                                       |
-| 🚨 Heat Wave     | _Planned:_ police are extra alert — higher chance of an encounter                                                |
-| 🚢 Big Shipment  | _Planned:_ bulk supply arrived; a drug sells at **0.65× normal price**                                          |
+| Event            | Effect                                                                                                      |
+| ---------------- | ----------------------------------------------------------------------------------------------------------- |
+| 🚀 Price Surge   | A random drug climbs to **1.5–2× the normal price** — great time to sell                                   |
+| 📉 Market Crash  | A random drug drops to **~0.72× the normal price** — bargain opportunity                                   |
+| 📦 Found a Stash | You find **5–15 free units** of a random drug on the street _(capped by available bag space)_               |
+| 🕵️ Hot Tip       | Street intel lifts a drug's price and reduces police heat slightly                                          |
+| 🚨 Heat Wave     | Police are extra alert — higher chance of an encounter and tougher travel risk                              |
+| 🚢 Big Shipment  | Bulk supply arrived; a drug (e.g. Cocaine in Medellín) drops to **~0.72× normal price**                    |
 
-> **Note:** Only **Found a Stash** has a concrete gameplay effect in the current build; all other events are cosmetic placeholders for future updates.
+> All six events are fully implemented. Severity and which drug is affected depend on the current city, season, difficulty, and global mood.
 
 ---
 
@@ -145,7 +145,7 @@ DrugRunnerMan is a fully-spec PWA:
 | `POST` | `/v1/shop/buy`          | `{ code }`           | Purchase a shop item                |
 
 Gameplay endpoints (`/v1/buy`, `/v1/sell`, `/v1/travel`, `/v1/skip`, `/v1/shop/buy`) include the full `state` snapshot in their response. `/v1/state` returns `state` + `prices`. `/v1/shop` returns only `{ items }`. `/healthz` returns only `{ status }`.  
-The `/v1/travel` response also includes `policeEncounter` and `marketEvent` fields.
+The `/v1/travel` response also includes `policeEncounter`, `marketEvent`, and `informantTip` fields. `informantTip` is non-null only when the player owns and expends the **Informant** (`INFORM`) shop item — it reveals the highest-priced drug at the destination (`{ drugCode, drugName, price, message }`).
 
 ---
 
