@@ -208,10 +208,14 @@ export async function createApp() {
 		}
 		const game = getOrCreateGame(sessionId(req));
 		try {
-			const { encounter: policeEncounter, marketEvent } = game.travel(parsed.data.to);
-			res
-				.status(200)
-				.json({ state: game.snapshot(), prices: game.prices(game.location), policeEncounter, marketEvent });
+			const { encounter: policeEncounter, marketEvent, informantTip } = game.travel(parsed.data.to);
+			res.status(200).json({
+				state: game.snapshot(),
+				prices: game.prices(game.location),
+				policeEncounter,
+				marketEvent,
+				informantTip,
+			});
 		} catch (error: unknown) {
 			if (error instanceof GameRuleError) {
 				res.status(422).json({ error: error.message });

@@ -44,6 +44,14 @@ export interface PoliceEncounter {
 
 export type MarketEventType = 'PRICE_SPIKE' | 'PRICE_CRASH' | 'FREE_STASH' | 'HOT_TIP' | 'HEAT_WAVE' | 'BIG_SHIPMENT';
 
+/** Tip returned when the player owns an Informant item and travels. */
+export interface InformantTip {
+	drugCode: Drug['code'];
+	drugName: string;
+	price: number;
+	message: string;
+}
+
 export interface MarketEvent {
 	type: MarketEventType;
 	drugCode?: Drug['code'];
@@ -249,7 +257,11 @@ export class Game {
 		return revenue;
 	}
 
-	travel(to: string): { encounter: PoliceEncounter | null; marketEvent: MarketEvent | null } {
+	travel(to: string): {
+		encounter: PoliceEncounter | null;
+		marketEvent: MarketEvent | null;
+		informantTip: InformantTip | null;
+	} {
 		this.ensureGameInProgress();
 		if (!this.locations[to]) {
 			throw new GameRuleError(`Unknown location: ${to}`);
@@ -340,7 +352,30 @@ export class Game {
 		}
 
 		this.bus.emit({ type: 'travel', from, to, day: this.day });
-		return { encounter, marketEvent };
+
+		// Informant: reveal the highest-priced drug at the destination (one use).
+		let informantTip: InformantTip | null = null;
+		if (this.ownedItemsSet.has('INFORM')) {
+			this.ownedItemsSet.delete('INFORM');
+			this.bus.emit({ type: 'itemUsed', item: 'INFORM' });
+			const destPrices = this.prices(to);
+			let bestCode = Object.keys(destPrices)[0] as Drug['code'];
+			for (const code of Object.keys(destPrices) as Drug['code'][]) {
+				if (destPrices[code] > destPrices[bestCode]) {
+					bestCode = code;
+				}
+			}
+			informantTip = {
+				drugCode: bestCode,
+				drugName: this.drugs[bestCode]?.name ?? bestCode,
+				price: destPrices[bestCode],
+				message: `🕵️ Your informant tips you off: ${this.drugs[bestCode]?.name ?? bestCode} is fetching $${destPrices[
+					bestCode
+				].toFixed(2)} in ${to} right now.`,
+			};
+		}
+
+		return { encounter, marketEvent, informantTip };
 	}
 
 	/** Buy a shop item. Returns the item code. */

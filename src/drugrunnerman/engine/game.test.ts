@@ -256,6 +256,76 @@ describe('Game engine', () => {
 			expect(game.threat).toBeCloseTo(0.5);
 		});
 	});
+
+	describe('Informant shop item (INFORM)', () => {
+		const informItem: import('../models/shopItem').ShopItem = {
+			code: 'INFORM',
+			name: 'Informant',
+			emoji: '🕵️',
+			price: 0,
+			description: 'Tips you off about the best deal at your next destination (one use).',
+			type: 'consumable',
+		};
+
+		it('returns null informantTip when INFORM is not owned', () => {
+			const game = new Game(drugs, locations, rng);
+			const result = game.travel('Seattle');
+			expect(result.informantTip).toBeNull();
+		});
+
+		it('returns an informantTip when INFORM is owned and consumed on travel', () => {
+			const game = new Game(drugs, locations, rng, { startingCash: 10000 });
+			game.buyItem(informItem);
+			expect(game.snapshot().ownedItems).toContain('INFORM');
+
+			const result = game.travel('Seattle');
+
+			expect(result.informantTip).not.toBeNull();
+			expect(result.informantTip?.drugCode).toBeTruthy();
+			expect(result.informantTip?.drugName).toBeTruthy();
+			expect(typeof result.informantTip?.price).toBe('number');
+			expect(result.informantTip?.price).toBeGreaterThan(0);
+			expect(result.informantTip?.message).toContain('🕵️');
+			// INFORM is consumed after one use
+			expect(game.snapshot().ownedItems).not.toContain('INFORM');
+		});
+
+		it('informantTip reports the highest-priced drug at destination', () => {
+			const flatDrugs: Record<string, Drug> = {
+				CAN: { code: 'CAN', name: 'Cannabis', mu: 10, sigma: 0, unit: 'g' },
+				COC: { code: 'COC', name: 'Cocaine', mu: 999, sigma: 0, unit: 'g' },
+				HER: { code: 'HER', name: 'Heroin', mu: 50, sigma: 0, unit: 'g' },
+				METH: { code: 'METH', name: 'Meth', mu: 50, sigma: 0, unit: 'g' },
+				MDM: { code: 'MDM', name: 'MDMA', mu: 20, sigma: 0, unit: 'tablet' },
+				FEN: { code: 'FEN', name: 'Fentanyl', mu: 5, sigma: 0, unit: 'pill' },
+			};
+			const game = new Game(flatDrugs, locations, rng, { startingCash: 10000 });
+			game.buyItem(informItem);
+			const result = game.travel('Seattle');
+			// COC has mu=999 and no city adjust reducing it, so it should be the most expensive
+			expect(result.informantTip?.drugCode).toBe('COC');
+		});
+
+		it('emits itemUsed event for INFORM on travel', () => {
+			const game = new Game(drugs, locations, rng, { startingCash: 10000 });
+			game.buyItem(informItem);
+			const events: string[] = [];
+			game.bus.on((e) => {
+				if (e.type === 'itemUsed') events.push((e as { type: string; item: string }).item);
+			});
+			game.travel('Seattle');
+			expect(events).toContain('INFORM');
+		});
+
+		it('INFORM is not re-usable after consumption', () => {
+			const game = new Game(drugs, locations, rng, { startingCash: 10000 });
+			game.buyItem(informItem);
+			game.travel('Seattle');
+			// Second travel has no informant
+			const result2 = game.travel('Denver');
+			expect(result2.informantTip).toBeNull();
+		});
+	});
 });
 
 describe('EventBus', () => {
