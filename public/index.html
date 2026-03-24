@@ -1417,9 +1417,26 @@
 					radial-gradient(circle at 75% 75%, rgba(163, 230, 53, 0.12), transparent 45%), #06101a;
 				cursor: crosshair;
 				overflow: hidden;
+				transition: border-color 0.3s;
+			}
+			.qa-target-zone.live {
+				border-color: rgba(248, 113, 113, 0.5);
 			}
 			.qa-target-zone.flash {
 				box-shadow: inset 0 0 0 2px rgba(253, 186, 116, 0.65);
+			}
+			.qa-idle-overlay {
+				position: absolute;
+				inset: 0;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				color: rgba(255, 255, 255, 0.2);
+				font-size: 0.7rem;
+				letter-spacing: 0.25em;
+				text-transform: uppercase;
+				pointer-events: none;
+				transition: opacity 0.3s;
 			}
 			.qa-target {
 				position: absolute;
@@ -1428,6 +1445,22 @@
 				border: 1px dashed rgba(255, 255, 255, 0.35);
 				border-radius: 12px;
 				background: rgba(255, 255, 255, 0.04);
+				transition: left 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+					border-color 0.3s, background 0.3s;
+			}
+			.qa-target.live {
+				border-color: rgba(248, 113, 113, 0.75);
+				background: rgba(248, 113, 113, 0.07);
+				animation: target-pulse 1s ease-in-out infinite;
+			}
+			@keyframes target-pulse {
+				0%,
+				100% {
+					box-shadow: 0 0 0 0 rgba(248, 113, 113, 0);
+				}
+				50% {
+					box-shadow: 0 0 0 7px rgba(248, 113, 113, 0.2);
+				}
 			}
 			.qa-target-head {
 				position: absolute;
@@ -1438,6 +1471,20 @@
 				border-radius: 50%;
 				border: 1px solid rgba(248, 113, 113, 0.65);
 				background: rgba(248, 113, 113, 0.1);
+				transition: border-color 0.3s, background 0.3s;
+			}
+			.qa-target.live .qa-target-head {
+				border-color: rgba(248, 113, 113, 1);
+				background: rgba(248, 113, 113, 0.22);
+			}
+			.qa-countdown-bar {
+				position: absolute;
+				bottom: 0;
+				left: 0;
+				height: 3px;
+				border-radius: 0 0 16px 16px;
+				background: linear-gradient(90deg, rgba(248, 113, 113, 0.9), rgba(253, 186, 116, 0.9));
+				transition: width 0.2s linear;
 			}
 			.qa-messages {
 				max-height: 220px;
@@ -2435,9 +2482,11 @@
 								</div>
 							</div>
 							<div class="qa-target-zone" id="qa-target-zone">
-								<div class="qa-target" style="left: 118px; top: 92px">
+								<div class="qa-idle-overlay" id="qa-idle-overlay">Awaiting orders…</div>
+								<div class="qa-target" id="qa-target" style="left: 118px; top: 52px">
 									<div class="qa-target-head"></div>
 								</div>
+								<div class="qa-countdown-bar" id="qa-countdown-bar" style="width: 0%"></div>
 							</div>
 							<p id="qa-event-text" style="margin-top: 8px; font-size: 0.78rem; color: #d4d4d8">
 								Phone online. Waiting for challenge...
@@ -2455,8 +2504,9 @@
 									Run Summary
 								</div>
 								<p class="mob-event-body" style="margin-top: 6px">
-									Cash rewards are only paid when a live phone challenge activates Hit Mode. Headshots earn an extra
-									payout, so waiting for the right message matters.
+									Cash rewards are only paid when DISPATCH sends a live job and Hit Mode activates. Tap or click the
+									target inside the zone to complete the hit — headshots earn a bigger payout. Jobs come in between
+									runs, so keep an eye on the phone.
 								</p>
 							</div>
 						</section>
@@ -2662,8 +2712,14 @@
 			let qaActiveChallenge = null;
 			let qaHitModeActive = false;
 			let qaChallengeEndsAt = null;
-			const QA_NEXT_CHALLENGE_BASE_MS = 6000;
-			const QA_NEXT_CHALLENGE_JITTER_MS = 12000;
+			const QA_NEXT_CHALLENGE_BASE_MS = 30000;
+			const QA_NEXT_CHALLENGE_JITTER_MS = 60000;
+			const QA_POST_CHALLENGE_BASE_MS = 45000;
+			const QA_POST_CHALLENGE_JITTER_MS = 60000;
+			const QA_TARGET_W = 122;
+			const QA_TARGET_MIN_X = 20;
+			const QA_TARGET_MIN_Y = 10;
+			const QA_TARGET_MAX_Y = 96;
 			const QA_CHALLENGE_BOOST_BY_CADENCE = {
 				off: 1.8,
 				light: 1.35,
@@ -2673,6 +2729,9 @@
 			let qaNextChallengeInMs = QA_NEXT_CHALLENGE_BASE_MS + Math.floor(Math.random() * QA_NEXT_CHALLENGE_JITTER_MS);
 			let qaChallengeTimer = null;
 			let qaChallengeExpiryTimer = null;
+			let qaCountdownTimer = null;
+			let qaTargetX = 118;
+			let qaTargetY = 52;
 			let setupConfig = {
 				gameLength: '30d',
 				difficulty: 'normal',
@@ -2749,28 +2808,44 @@
 			};
 			const CHALLENGES = [
 				{
-					id: 'quick-pop',
-					title: 'QUICK POP',
-					body: 'Runner spotted. Clean hit needed. Go now.',
+					id: 'delivery-run',
+					title: 'DELIVERY RUN',
+					body: 'Package is ready. Courier is blocked at the drop point — clear the path now.',
 					reward: 180,
 					headshotBonus: 320,
-					durationMs: 18000,
-				},
-				{
-					id: 'street-order',
-					title: 'STREET ORDER',
-					body: 'A rival courier is moving product. Intercept.',
-					reward: 220,
-					headshotBonus: 380,
-					durationMs: 20000,
-				},
-				{
-					id: 'late-night-job',
-					title: 'LATE NIGHT JOB',
-					body: 'Challenge live. Hit mode enabled for this round.',
-					reward: 250,
-					headshotBonus: 450,
 					durationMs: 22000,
+				},
+				{
+					id: 'border-eyes',
+					title: 'BORDER EYES',
+					body: 'Patrol spotted near the crossing. Take him out before the shipment moves.',
+					reward: 220,
+					headshotBonus: 400,
+					durationMs: 24000,
+				},
+				{
+					id: 'stash-defence',
+					title: 'STASH DEFENCE',
+					body: 'Rival crew is moving on the stash house. Eliminate the threat before they breach.',
+					reward: 260,
+					headshotBonus: 460,
+					durationMs: 26000,
+				},
+				{
+					id: 'turf-control',
+					title: 'TURF CONTROL',
+					body: 'Cartel enforcer just stepped into our territory. Handle it quietly.',
+					reward: 200,
+					headshotBonus: 360,
+					durationMs: 22000,
+				},
+				{
+					id: 'informant-burn',
+					title: 'INFORMANT BURN',
+					body: 'Word is someone is talking to the feds. Shut it down before the deal falls apart.',
+					reward: 300,
+					headshotBonus: 520,
+					durationMs: 20000,
 				},
 			];
 			const randomFrom = (items) => items[Math.floor(Math.random() * items.length)];
@@ -2800,6 +2875,8 @@
 				const activeWrap = document.getElementById('qa-active-wrap');
 				const modeEl = document.getElementById('qa-mode');
 				const zoneEl = document.getElementById('qa-target-zone');
+				const targetEl = document.getElementById('qa-target');
+				const idleOverlay = document.getElementById('qa-idle-overlay');
 
 				if (phoneSub) phoneSub.textContent = qaHitModeActive && qaActiveChallenge ? 'Challenge live' : 'Standby';
 				if (unreadEl) unreadEl.textContent = unreadCount > 0 ? `${unreadCount} new` : 'No new alerts';
@@ -2820,7 +2897,7 @@
 				if (activeWrap) {
 					activeWrap.innerHTML = qaActiveChallenge
 						? `<div style="margin-bottom:10px;border-radius:14px;border:1px solid rgba(249,115,22,0.3);background:rgba(249,115,22,0.1);padding:10px">
-								<div style="font-size:0.58rem;text-transform:uppercase;letter-spacing:0.16em;color:#fdba74">Active Challenge</div>
+								<div style="font-size:0.58rem;text-transform:uppercase;letter-spacing:0.16em;color:#fdba74">Active Job</div>
 								<div style="margin-top:4px;font-size:0.85rem;font-weight:900;color:#fff">${qaActiveChallenge.title}</div>
 								<div style="margin-top:4px;font-size:0.72rem;color:#d4d4d8">${qaActiveChallenge.body}</div>
 								<div style="margin-top:6px;font-size:0.7rem;color:#a1a1aa">Base Reward: $${qaActiveChallenge.reward} · Headshot Bonus: $${qaActiveChallenge.headshotBonus}</div>
@@ -2829,12 +2906,50 @@
 				}
 				if (modeEl) {
 					modeEl.textContent = qaHitModeActive ? 'LIVE' : 'IDLE';
-					modeEl.style.color = qaHitModeActive ? '#bef264' : '#d4d4d8';
+					modeEl.style.color = qaHitModeActive ? '#f87171' : '#d4d4d8';
 				}
-				if (zoneEl) zoneEl.classList.toggle('flash', false);
+				if (zoneEl) {
+					zoneEl.classList.toggle('flash', false);
+					zoneEl.classList.toggle('live', qaHitModeActive);
+				}
+				if (targetEl) targetEl.classList.toggle('live', qaHitModeActive);
+				if (idleOverlay) idleOverlay.style.opacity = qaHitModeActive ? '0' : '1';
 				document.getElementById('qa-cash').textContent = `$${qaCash}`;
 				document.getElementById('qa-score').textContent = qaScore;
 				document.getElementById('qa-combo').textContent = qaCombo;
+			}
+			function randomizeTargetPosition() {
+				const zone = document.getElementById('qa-target-zone');
+				const targetEl = document.getElementById('qa-target');
+				if (!zone || !targetEl) return;
+				const zoneW = zone.offsetWidth || 320;
+				const maxX = Math.max(QA_TARGET_MIN_X + 10, zoneW - QA_TARGET_W - QA_TARGET_MIN_X);
+				qaTargetX = QA_TARGET_MIN_X + Math.floor(Math.random() * (maxX - QA_TARGET_MIN_X));
+				qaTargetY = QA_TARGET_MIN_Y + Math.floor(Math.random() * (QA_TARGET_MAX_Y - QA_TARGET_MIN_Y));
+				targetEl.style.left = qaTargetX + 'px';
+				targetEl.style.top = qaTargetY + 'px';
+			}
+			function clearCountdown() {
+				if (qaCountdownTimer) { clearInterval(qaCountdownTimer); qaCountdownTimer = null; }
+				const bar = document.getElementById('qa-countdown-bar');
+				if (bar) bar.style.width = '0%';
+			}
+			function startCountdown() {
+				if (qaCountdownTimer) clearInterval(qaCountdownTimer);
+				if (!qaHitModeActive || !qaChallengeEndsAt || !qaActiveChallenge) return;
+				const totalMs = qaActiveChallenge.durationMs;
+				const updateBar = () => {
+					const bar = document.getElementById('qa-countdown-bar');
+					if (!bar) return;
+					const remaining = Math.max(0, qaChallengeEndsAt - Date.now());
+					bar.style.width = ((remaining / totalMs) * 100) + '%';
+					if (remaining <= 0) {
+						clearInterval(qaCountdownTimer);
+						qaCountdownTimer = null;
+					}
+				};
+				updateBar();
+				qaCountdownTimer = setInterval(updateBar, 100);
 			}
 			function scheduleChallengeSpawn() {
 				if (qaChallengeTimer) clearTimeout(qaChallengeTimer);
@@ -2845,10 +2960,13 @@
 					qaActiveChallenge = challenge;
 					qaHitModeActive = true;
 					qaChallengeEndsAt = Date.now() + challenge.durationMs;
-					pushPhoneMessage('DISPATCH', `${challenge.title}: ${challenge.body}`);
-					qaEventText(`Incoming challenge: ${challenge.title}`);
+					const locContext = state ? ` [${state.location}]` : '';
+					pushPhoneMessage('DISPATCH', `${challenge.title}${locContext}: ${challenge.body}`);
+					qaEventText(`Job incoming: ${challenge.title}`);
 					qaPhoneOpen = true;
-					qaNextChallengeInMs = 10000 + Math.floor(Math.random() * 18000);
+					qaNextChallengeInMs = QA_POST_CHALLENGE_BASE_MS + Math.floor(Math.random() * QA_POST_CHALLENGE_JITTER_MS);
+					randomizeTargetPosition();
+					startCountdown();
 					startChallengeExpiryWatcher();
 					renderQuickAccess();
 				}, Math.floor(qaNextChallengeInMs * challengeBoost));
@@ -2858,13 +2976,15 @@
 				if (!qaHitModeActive || !qaChallengeEndsAt) return;
 				qaChallengeExpiryTimer = setInterval(() => {
 					if (Date.now() >= qaChallengeEndsAt) {
-						pushPhoneMessage('DISPATCH', 'Challenge expired. Reward window closed.', true);
+						const expiredTitle = qaActiveChallenge ? qaActiveChallenge.title : 'Job';
+						pushPhoneMessage('DISPATCH', `${expiredTitle} expired. Reward window closed.`, true);
 						qaHitModeActive = false;
 						qaActiveChallenge = null;
 						qaChallengeEndsAt = null;
-						qaEventText('Challenge expired.');
+						qaEventText('Job expired. Awaiting next orders…');
 						clearInterval(qaChallengeExpiryTimer);
 						qaChallengeExpiryTimer = null;
+						clearCountdown();
 						renderQuickAccess();
 						scheduleChallengeSpawn();
 					}
@@ -2877,8 +2997,8 @@
 				const x = ev.clientX - rect.left;
 				const y = ev.clientY - rect.top;
 
-				const bodyBox = { x: 118, y: 92, w: 122, h: 214 };
-				const headBox = { x: 145, y: 98, w: 42, h: 42 };
+				const bodyBox = { x: qaTargetX, y: qaTargetY, w: QA_TARGET_W, h: 214 };
+				const headBox = { x: qaTargetX + 27, y: qaTargetY + 6, w: 42, h: 42 };
 				const isBodyHit = x >= bodyBox.x && x <= bodyBox.x + bodyBox.w && y >= bodyBox.y && y <= bodyBox.y + bodyBox.h;
 				const isHeadshot = x >= headBox.x && x <= headBox.x + headBox.w && y >= headBox.y && y <= headBox.y + headBox.h;
 
@@ -2903,10 +3023,10 @@
 						? qaActiveChallenge.reward + qaActiveChallenge.headshotBonus
 						: qaActiveChallenge.reward;
 					qaCash += payout;
-					qaEventText(isHeadshot ? `Headshot bonus secured: +$${payout}` : `Challenge hit landed: +$${payout}`);
+					qaEventText(isHeadshot ? `Headshot bonus secured: +$${payout}` : `Job complete: +$${payout}`);
 					pushPhoneMessage(
 						'DISPATCH',
-						isHeadshot ? `Confirmed headshot. Bonus paid: $${payout}.` : `Hit confirmed. Reward paid: $${payout}.`,
+						isHeadshot ? `Confirmed headshot. Bonus paid: $${payout}.` : `Job done. Payment confirmed: $${payout}.`,
 						true,
 					);
 					qaHitModeActive = false;
@@ -2916,12 +3036,13 @@
 						clearInterval(qaChallengeExpiryTimer);
 						qaChallengeExpiryTimer = null;
 					}
+					clearCountdown();
 					scheduleChallengeSpawn();
 				} else {
 					qaEventText(
 						isHeadshot
-							? 'Headshot landed. No active challenge, no cash payout.'
-							: 'Hit landed. No active challenge, no cash payout.',
+							? 'Headshot landed. No active job, no cash payout.'
+							: 'Hit landed. No active job, no cash payout.',
 					);
 				}
 				renderQuickAccess();
